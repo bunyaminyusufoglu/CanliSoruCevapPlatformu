@@ -1,13 +1,16 @@
 import React from 'react';
-import { Navbar, Container } from 'react-bootstrap';
 
 const Header = () => {
   return (
-    <Navbar bg="dark" variant="dark">
-      <Container>
-        <Navbar.Brand href="#home">Canlı Soru & Cevap</Navbar.Brand>
-      </Container>
-    </Navbar>
+    <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div className="container">
+        <a className="navbar-brand" href="/">Canlı Soru & Cevap</a>
+        <div className="navbar-nav">
+          <a className="nav-link" href="/login">Giriş Yap</a>
+          <a className="nav-link" href="/register">Kayıt Ol</a>
+        </div>
+      </div>
+    </nav>
   );
 };
 

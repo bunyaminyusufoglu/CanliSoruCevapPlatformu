@@ -1,14 +1,18 @@
 import React from 'react';
-import Header from './components/Header';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import HomePage from './views/HomePage';
+import LoginPage from './views/LoginPage';
+import RegisterPage from './views/RegisterPage';
 
 function App() {
   return (
-    <div>
-      <Header />
-      <div className="container mt-4">
-        <h1>Canlı Soru-Cevap ve Eğitim Platformu</h1>
-      </div>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+      </Routes>
+    </Router>
   );
 }
 
