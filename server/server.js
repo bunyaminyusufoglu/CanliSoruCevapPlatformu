@@ -26,10 +26,17 @@ const io = new Server(server, {
 
 io.on("connection", (socket) => {
   console.log("Kullanıcı bağlandı: ", socket.id);
+
+  socket.on("chatMessage", (msg) => {
+    io.emit("chatMessage", msg);
+    console.log("Mesaj: ", msg);
+  });
+
   socket.on("disconnect", () => {
     console.log("Kullanıcı ayrıldı: ", socket.id);
   });
 });
+
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Sunucu çalışıyor: ${PORT}`));

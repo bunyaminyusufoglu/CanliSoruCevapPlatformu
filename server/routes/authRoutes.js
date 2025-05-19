@@ -31,4 +31,37 @@ router.post('/login', async (req, res) => {
   }
 });
 
+router.get('/user/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const user = await User.findById(id);
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: 'Kullanıcı bulunamadı.' });
+  }
+});
+
+router.put('/user/:id', async (req, res) => {
+  const { id } = req.params;
+  const { ad, soyad, username, email, password } = req.body;
+  try {
+    const user = await User.findByIdAndUpdate(id, { ad, soyad, username, email, password }, { new: true });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: 'Kullanıcı güncellenemedi.' });
+  }
+});
+
+router.delete('/user/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await User.findByIdAndDelete(id);
+    res.json({ message: 'Kullanıcı silindi.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Kullanıcı silinemedi.' });
+  }
+});
+
+
+
 module.exports = router;
