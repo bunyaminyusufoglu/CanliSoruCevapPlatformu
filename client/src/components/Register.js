@@ -19,13 +19,15 @@ const Register = () => {
 
   return (
     <div className="container mt-3">
-      <h2>Kayıt Ol</h2>
-      <input placeholder="Ad" value={ad} onChange={(e) => setAd(e.target.value)} />
-      <input placeholder="Soyad" value={soyad} onChange={(e) => setSoyad(e.target.value)} />
-      <input placeholder="Kullanıcı Adı" value={username} onChange={(e) => setUsername(e.target.value)} />
-      <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-      <input type="password" placeholder="Şifre" value={password} onChange={(e) => setPassword(e.target.value)} />
-      <button onClick={handleRegister} className="btn btn-primary mt-2">Kayıt Ol</button>
+      <h2>Kayıt Ol</h2> 
+      <form onSubmit={handleRegister}>
+        <input className="form-control mb-2" placeholder="Ad" value={ad} onChange={(e) => setAd(e.target.value)} />
+        <input className="form-control mb-2" placeholder="Soyad" value={soyad} onChange={(e) => setSoyad(e.target.value)} />
+        <input className="form-control mb-2" placeholder="Kullanıcı Adı" value={username} onChange={(e) => setUsername(e.target.value)} />
+        <input className="form-control mb-2" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <input className="form-control mb-2" type="password" placeholder="Şifre" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <button type="submit" className="btn btn-primary mt-2">Kayıt Ol</button>
+      </form>
     </div>
   );
 };
