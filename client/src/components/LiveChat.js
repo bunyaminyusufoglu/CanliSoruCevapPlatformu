@@ -15,8 +15,9 @@ const LiveChat = () => {
   }, []);
 
   const sendMessage = () => {
+    const username = localStorage.getItem('username');
     if (message.trim()) {
-      socket.emit('chatMessage', message);
+      socket.emit('chatMessage', { message, username });
       setMessage('');
     }
   };
@@ -27,7 +28,7 @@ const LiveChat = () => {
       <div className="chat-box">
         {chat.map((msg, index) => (
           <div key={index} className="chat-message">
-            {msg}
+            <strong>{msg.username}:</strong> {msg.message}
           </div>
         ))}
       </div>

@@ -8,7 +8,13 @@ const Login = () => {
   const handleLogin = async () => {
     try {
       const response = await login({ email, password });
-      alert('Giriş başarılı! Hoş geldiniz ' + response.data.username);
+      const username = response.data.username;
+
+      localStorage.setItem('username', username);
+      
+      alert('Giriş başarılı! Hoş geldiniz ' + username);
+
+      window.location.href = '/';
     } catch (err) {
       alert('Giriş hatası: ' + err.response.data.error);
     }
