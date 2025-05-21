@@ -5,6 +5,7 @@ import LoginPage from './views/LoginPage';
 import RegisterPage from './views/RegisterPage';
 import LiveChatPage from './views/LiveChatPage';
 import ProfilePage from './views/ProfilePage';
+import AdminPanelPage from './views/AdminPanelPage';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/admin" element={<AdminPanelPage />} />
       </Routes>
     </Router>
   );

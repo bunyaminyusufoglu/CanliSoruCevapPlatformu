@@ -24,19 +24,27 @@ const io = new Server(server, {
   }
 });
 
+// 🔥 Bağlı kullanıcıları tutmak için Set yapısı
+const connectedUsers = new Set();
+
 io.on("connection", (socket) => {
   console.log("Kullanıcı bağlandı: ", socket.id);
+  connectedUsers.add(socket.id);
+  console.log("Şu anki bağlı kullanıcılar:", [...connectedUsers]);
 
+  // Gelen mesajı tüm kullanıcılara yay
   socket.on("chatMessage", (msg) => {
     io.emit("chatMessage", msg);
     console.log("Mesaj: ", msg);
   });
 
+  // Kullanıcı bağlantısı kesildiğinde
   socket.on("disconnect", () => {
+    connectedUsers.delete(socket.id);
     console.log("Kullanıcı ayrıldı: ", socket.id);
+    console.log("Kalan kullanıcılar:", [...connectedUsers]);
   });
 });
-
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Sunucu çalışıyor: ${PORT}`));
