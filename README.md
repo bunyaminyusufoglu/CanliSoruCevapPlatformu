@@ -27,15 +27,3 @@ Canlı yayın ve anlık soru-cevap destekli eğitim platformu.
    npm install
    npm start
    ```
-
-## 2. Adım: Sequelize CLI ile Yapılandırma ve Klasörleri Oluştur
-
-Aşağıdaki komutu çalıştırarak Sequelize için temel klasör ve dosya yapısını oluştur:
-```sh
-npx sequelize-cli init
-```
-Bu komut şunları oluşturur:
-- `config/config.json`
-- `models/`
-- `migrations/`
-- `seeders/`
