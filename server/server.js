@@ -24,6 +24,8 @@ const io = new Server(server, {
   }
 });
 
+app.set('io', io);
+
 // 🔥 Bağlı kullanıcıları username ile tutmak için Map kullanıyoruz
 const connectedUsers = new Map();
 
@@ -119,6 +121,11 @@ io.on("connection", (socket) => {
     if (!roomMessages[roomId]) roomMessages[roomId] = [];
     roomMessages[roomId].push(msgObj);
     io.to(roomId).emit("chatMessage", msgObj);
+    // Yeni mesaj bildirimi
+    io.to(roomId).emit("newMessage", {
+      roomId,
+      message: msgObj
+    });
     console.log(`💬 [${roomId}] ${username}:`, message);
   });
 

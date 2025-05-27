@@ -71,6 +71,15 @@ router.post('/', adminAuth, upload.fields([
     });
 
     await course.save();
+    // Yeni ders bildirimi
+    if (req.app.get('io')) {
+      req.app.get('io').emit('newCourse', {
+        title: course.title,
+        description: course.description,
+        id: course._id,
+        createdAt: course.createdAt
+      });
+    }
     res.json({ success: true, course });
   } catch (error) {
     console.error('Ders eklenirken hata:', error);

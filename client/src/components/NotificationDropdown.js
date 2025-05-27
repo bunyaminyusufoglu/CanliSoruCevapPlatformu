@@ -28,8 +28,43 @@ const NotificationDropdown = () => {
         setUnreadCount(prev => prev + 1);
       });
 
+      // Yeni ders bildirimi
+      socketRef.current.on('newCourse', (course) => {
+        setNotifications(prev => [
+          {
+            _id: `course-${course.id}-${course.createdAt}`,
+            type: 'course',
+            isRead: false,
+            createdAt: course.createdAt,
+            text: `Yeni ders eklendi: ${course.title}`,
+            link: `/courses` // veya ilgili kurs sayfası
+          },
+          ...prev
+        ]);
+        setUnreadCount(prev => prev + 1);
+      });
+
+      // Yeni mesaj bildirimi
+      socketRef.current.on('newMessage', ({ roomId, message }) => {
+        setNotifications(prev => [
+          {
+            _id: `msg-${roomId}-${message.time}`,
+            type: 'message',
+            isRead: false,
+            createdAt: message.time,
+            text: `Yeni mesaj (${message.username}): ${message.message}`,
+            link: `/livechat?room=${roomId}`
+          },
+          ...prev
+        ]);
+        setUnreadCount(prev => prev + 1);
+      });
+
       return () => {
         if (socketRef.current) {
+          socketRef.current.off('notification');
+          socketRef.current.off('newCourse');
+          socketRef.current.off('newMessage');
           socketRef.current.disconnect();
         }
       };
