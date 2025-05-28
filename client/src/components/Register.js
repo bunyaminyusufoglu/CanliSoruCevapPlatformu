@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { register } from '../api';
 import { Form, Button } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const Register = () => {
   const [ad, setAd] = useState('');
@@ -12,18 +12,18 @@ const Register = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { register } = useAuth();
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    try {
-      const response = await register({ ad, soyad, username, email, password });
-      navigate('/login');
-    } catch (err) {
-      setError(err.response?.data?.error || 'Kayıt sırasında bir hata oluştu.');
-    } finally {
-      setLoading(false);
+    const result = await register({ ad, soyad, username, email, password });
+    setLoading(false);
+    if (result.success) {
+      navigate('/'); // Kayıt sonrası ana sayfaya yönlendir
+    } else {
+      setError(result.error);
     }
   };
 

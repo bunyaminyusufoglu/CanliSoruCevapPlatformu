@@ -8,10 +8,19 @@ const auth = require('../middleware/auth');
 router.post('/register', async (req, res) => {
   const { ad, soyad, username, email, password } = req.body;
   try { 
+    // Email veya kullanıcı adı kontrolü
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Bu email veya kullanıcı adı zaten kullanılıyor.' });
+    }
     const user = new User({ ad, soyad, username, email, password });
     await user.save();
-    res.status(201).json({ message: 'Kayıt başarılı!' });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const userObj = user.toObject();
+    delete userObj.password;
+    res.status(201).json({ token, user: userObj });
   } catch (err) {
+    console.error('Register error:', err);
     res.status(400).json({ error: 'Kullanıcı oluşturulamadı.' });
   }
 });

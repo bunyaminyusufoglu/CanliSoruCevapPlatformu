@@ -7,6 +7,8 @@ import LiveChatPage from './views/LiveChatPage';
 import ProfilePage from './views/ProfilePage';
 import AdminPanelPage from './views/AdminPanelPage';
 import LiveStreamPage from './views/LiveStreamPage';
+import QuestionList from './components/QuestionList';
+import QuestionDetail from './components/QuestionDetail';
 import { AuthProvider } from './contexts/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import Navigation from './components/Navigation';
@@ -24,11 +26,14 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/admin" element={<AdminPanelPage />} />
-            <Route path="/canli-yayin" element={
+            <Route path="/courses" element={
               <PrivateRoute>
                 <LiveStreamPage />
               </PrivateRoute>
             } />
+            {/* Soru-Cevap Sistemi Rotaları */}
+            <Route path="/questions" element={<QuestionList />} />
+            <Route path="/questions/:id" element={<QuestionDetail />} />
           </Routes>
         </div>
       </AuthProvider>

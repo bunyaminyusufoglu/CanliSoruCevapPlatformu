@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Alert, Spinner } from 'react-bootstrap';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import CourseCard from '../components/CourseCard';
@@ -43,46 +43,72 @@ const CoursesPage = () => {
 
   if (loading) {
     return (
-      <Container className="mt-4">
-        <Alert variant="info">Dersler yükleniyor...</Alert>
+      <Container className="min-vh-100 d-flex align-items-center justify-content-center">
+        <div className="text-center">
+          <Spinner animation="border" role="status" variant="primary" style={{ width: '3rem', height: '3rem' }}>
+            <span className="visually-hidden">Yükleniyor...</span>
+          </Spinner>
+          <p className="mt-3 text-muted">Dersler yükleniyor...</p>
+        </div>
       </Container>
     );
   }
 
   return (
-    <Container className="mt-4">
-      <h1 className="mb-4">Eğitim İçerikleri</h1>
-      
-      {error && <Alert variant="danger">{error}</Alert>}
-
-      {user?.isAdmin && (
-        <Row className="mb-4">
-          <Col>
-            <div className="bg-light p-4 rounded">
-              <h2>Yeni Ders Ekle</h2>
-              <AddCourseForm onCourseAdded={handleCourseAdded} />
-            </div>
-          </Col>
-        </Row>
-      )}
-
-      <Row>
-        {courses.length === 0 ? (
-          <Col>
-            <Alert variant="info">Henüz ders bulunmuyor.</Alert>
-          </Col>
-        ) : (
-          courses.map(course => (
-            <Col key={course._id} xs={12} md={6} lg={4} className="mb-4">
-              <CourseCard 
-                course={course} 
-                onCourseUpdated={handleCourseUpdated}
-                onCourseDeleted={handleCourseDeleted}
-              />
-            </Col>
-          ))
+    <Container fluid className="bg-light min-vh-100 py-5">
+      <Container>
+        <div className="text-center mb-5">
+          <h1 className="display-4 fw-bold text-primary mb-3">Eğitim İçerikleri</h1>
+          <div className="bg-primary mx-auto" style={{ width: '100px', height: '4px' }}></div>
+          <p className="lead text-muted mt-3">Kapsamlı eğitim içeriklerimizle kendinizi geliştirin</p>
+        </div>
+        
+        {error && (
+          <Alert variant="danger" className="mb-4 shadow-sm">
+            <i className="bi bi-exclamation-circle me-2"></i>
+            {error}
+          </Alert>
         )}
-      </Row>
+
+        {user?.isAdmin && (
+          <Row className="mb-5">
+            <Col lg={8} className="mx-auto">
+              <div className="bg-white p-4 rounded-3 shadow-sm border">
+                <h2 className="h4 mb-4 text-primary">
+                  <i className="bi bi-plus-circle me-2"></i>
+                  Yeni Ders Ekle
+                </h2>
+                <AddCourseForm onCourseAdded={handleCourseAdded} />
+              </div>
+            </Col>
+          </Row>
+        )}
+
+        <Row className="g-4">
+          {courses.length === 0 ? (
+            <Col>
+              <div className="text-center py-5">
+                <i className="bi bi-book fs-1 text-muted mb-3 d-block"></i>
+                <Alert variant="info" className="d-inline-block">
+                  Henüz ders bulunmuyor.
+                </Alert>
+              </div>
+            </Col>
+          ) : (
+            courses.map(course => (
+              <Col key={course._id} xs={12} md={6} lg={4}>
+                <div className="h-100">
+                  <CourseCard 
+                    course={course} 
+                    onCourseUpdated={handleCourseUpdated}
+                    onCourseDeleted={handleCourseDeleted}
+                  />
+                </div>
+              </Col>
+            ))
+          )}
+        </Row>
+      </Container>
     </Container>
   );
 };

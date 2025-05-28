@@ -52,6 +52,15 @@ const Navigation = () => {
                 
                 <Nav.Link 
                   as={Link} 
+                  to="/questions" 
+                  className="mx-2 text-dark fw-medium"
+                  onClick={() => setExpanded(false)}
+                >
+                  <i className="fas fa-question-circle me-1"></i> Soru-Cevap
+                </Nav.Link>
+                
+                <Nav.Link 
+                  as={Link} 
                   to="/livechat" 
                   className="mx-2 text-dark fw-medium"
                   onClick={() => setExpanded(false)}
