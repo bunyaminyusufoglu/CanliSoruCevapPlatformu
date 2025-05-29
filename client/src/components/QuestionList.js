@@ -1,181 +1,277 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Form, InputGroup, Badge, Spinner, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Card, Form, Button, InputGroup, Pagination } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import AddQuestionForm from './AddQuestionForm';
 
 const QuestionList = () => {
-  const { currentUser } = useAuth();
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showAddForm, setShowAddForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [sortBy, setSortBy] = useState('newest');
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedUsername, setSelectedUsername] = useState('');
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
+  // Debounce search term
   useEffect(() => {
-    fetchQuestions();
-  }, [sortBy]);
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
 
-  const fetchQuestions = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`http://localhost:5000/api/questions?sort=${sortBy}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setQuestions(response.data.questions);
-      setLoading(false);
-    } catch (err) {
-      setError('Sorular yüklenirken bir hata oluştu.');
-      setLoading(false);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Fetch questions
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams({
+          page: currentPage,
+          limit: 10,
+          sortBy,
+          sortOrder
+        });
+
+        if (debouncedSearchTerm) params.append('search', debouncedSearchTerm);
+        if (selectedCategory) params.append('category', selectedCategory);
+        if (selectedUsername) params.append('username', selectedUsername);
+
+        const response = await axios.get(`http://localhost:5000/api/questions?${params}`);
+        setQuestions(response.data.questions);
+        setTotalPages(response.data.totalPages);
+        setError('');
+      } catch (err) {
+        setError('Sorular yüklenirken bir hata oluştu');
+        console.error('Sorular yüklenirken hata:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, [currentPage, sortBy, sortOrder, debouncedSearchTerm, selectedCategory, selectedUsername]);
+
+  const handleSortChange = (newSortBy) => {
+    if (newSortBy === sortBy) {
+      setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+    } else {
+      setSortBy(newSortBy);
+      setSortOrder('desc');
     }
   };
 
-  const handleQuestionAdded = () => {
-    setShowAddForm(false);
-    fetchQuestions();
-  };
-
-  const filteredQuestions = questions.filter(question => {
-    const matchesSearch = question.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         question.content.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !selectedCategory || question.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  if (loading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center min-vh-100">
-        <Spinner animation="border" variant="primary" />
-      </div>
-    );
-  }
+  const categories = [
+    'matematik', 'fizik', 'kimya', 'biyoloji', 
+    'türkçe', 'tarih', 'coğrafya', 'diğer'
+  ];
 
   return (
-    <div className="container py-4">
-      {/* Başlık ve Filtreler */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="mb-0">Sorular</h4>
-        {currentUser && (
-          <Button 
-            variant="primary" 
-            onClick={() => setShowAddForm(!showAddForm)}
-          >
-            <i className="fas fa-plus me-1"></i>
-            {showAddForm ? 'İptal' : 'Yeni Soru'}
-          </Button>
-        )}
-      </div>
-
-      {error && <Alert variant="danger">{error}</Alert>}
-
-      {/* Soru Ekleme Formu */}
-      {showAddForm && (
-        <AddQuestionForm onQuestionAdded={handleQuestionAdded} />
-      )}
-
-      {/* Filtreler */}
-      <Card className="border-0 shadow-sm mb-4">
-        <Card.Body className="p-3">
-          <div className="row g-3">
-            <div className="col-md-6">
-              <InputGroup>
-                <InputGroup.Text>
-                  <i className="fas fa-search"></i>
-                </InputGroup.Text>
-                <Form.Control
-                  type="text"
-                  placeholder="Sorularda ara..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </InputGroup>
-            </div>
-            <div className="col-md-3">
-              <Form.Select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-              >
-                <option value="">Tüm Kategoriler</option>
-                <option value="matematik">Matematik</option>
-                <option value="fizik">Fizik</option>
-                <option value="kimya">Kimya</option>
-                <option value="biyoloji">Biyoloji</option>
-                <option value="turkce">Türkçe</option>
-                <option value="ingilizce">İngilizce</option>
-                <option value="tarih">Tarih</option>
-                <option value="cografya">Coğrafya</option>
-                <option value="diger">Diğer</option>
-              </Form.Select>
-            </div>
-            <div className="col-md-3">
-              <Form.Select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                <option value="newest">En Yeni</option>
-                <option value="oldest">En Eski</option>
-                <option value="mostAnswers">En Çok Cevaplanan</option>
-                <option value="mostHelpful">En Faydalı</option>
-              </Form.Select>
-            </div>
-          </div>
-        </Card.Body>
-      </Card>
-
-      {/* Soru Listesi */}
-      {filteredQuestions.length === 0 ? (
-        <Alert variant="info" className="text-center">
-          <i className="fas fa-info-circle me-2"></i>
-          {searchTerm || selectedCategory ? 'Arama kriterlerinize uygun soru bulunamadı.' : 'Henüz soru bulunmuyor.'}
-        </Alert>
-      ) : (
-        filteredQuestions.map(question => (
-          <Card key={question._id} className="border-0 shadow-sm mb-3">
-            <Card.Body className="p-4">
-              <div className="d-flex justify-content-between align-items-start">
-                <div className="flex-grow-1">
-                  <Link 
-                    to={`/questions/${question._id}`}
-                    className="text-decoration-none text-dark"
+    <Container className="py-4">
+      <Row className="mb-4">
+        <Col>
+          <h2 className="mb-4">Sorular</h2>
+          
+          {/* Arama ve Filtreleme */}
+          <Card className="mb-4">
+            <Card.Body>
+              <Row>
+                <Col md={4} className="mb-3">
+                  <InputGroup>
+                    <InputGroup.Text>
+                      <i className="fas fa-search"></i>
+                    </InputGroup.Text>
+                    <Form.Control
+                      type="text"
+                      placeholder="Soru ara..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </InputGroup>
+                </Col>
+                <Col md={3} className="mb-3">
+                  <Form.Select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
                   >
-                    <h5 className="mb-2">{question.title}</h5>
-                  </Link>
-                  <div className="d-flex gap-2 mb-3">
-                    <Badge bg="primary">{question.category}</Badge>
-                    <Badge bg="secondary">
-                      <i className="fas fa-clock me-1"></i>
-                      {new Date(question.createdAt).toLocaleDateString('tr-TR')}
-                    </Badge>
-                    <Badge bg="info">
-                      <i className="fas fa-comments me-1"></i>
-                      {question.answers?.length || 0} cevap
-                    </Badge>
+                    <option value="">Tüm Kategoriler</option>
+                    {categories.map(category => (
+                      <option key={category} value={category}>
+                        {category.charAt(0).toUpperCase() + category.slice(1)}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Col>
+                <Col md={3} className="mb-3">
+                  <Form.Control
+                    type="text"
+                    placeholder="Kullanıcı adı ile filtrele"
+                    value={selectedUsername}
+                    onChange={(e) => setSelectedUsername(e.target.value)}
+                  />
+                </Col>
+                <Col md={2} className="mb-3">
+                  <Button
+                    variant="primary"
+                    className="w-100"
+                    onClick={() => setShowAddForm(true)}
+                  >
+                    <i className="fas fa-plus me-2"></i>
+                    Soru Sor
+                  </Button>
+                </Col>
+              </Row>
+
+              {/* Sıralama Seçenekleri */}
+              <Row className="mt-3">
+                <Col>
+                  <div className="d-flex gap-2">
+                    <Button
+                      variant={sortBy === 'createdAt' ? 'primary' : 'outline-primary'}
+                      size="sm"
+                      onClick={() => handleSortChange('createdAt')}
+                    >
+                      En Yeni {sortBy === 'createdAt' && (sortOrder === 'desc' ? '↓' : '↑')}
+                    </Button>
+                    <Button
+                      variant={sortBy === 'viewCount' ? 'primary' : 'outline-primary'}
+                      size="sm"
+                      onClick={() => handleSortChange('viewCount')}
+                    >
+                      En Çok Görüntülenen {sortBy === 'viewCount' && (sortOrder === 'desc' ? '↓' : '↑')}
+                    </Button>
+                    <Button
+                      variant={sortBy === 'answerCount' ? 'primary' : 'outline-primary'}
+                      size="sm"
+                      onClick={() => handleSortChange('answerCount')}
+                    >
+                      En Çok Cevaplanan {sortBy === 'answerCount' && (sortOrder === 'desc' ? '↓' : '↑')}
+                    </Button>
                   </div>
-                  <p className="text-muted mb-0">
-                    {question.content.length > 200 
-                      ? question.content.substring(0, 200) + '...' 
-                      : question.content}
-                  </p>
-                </div>
-                <div className="text-end ms-3">
-                  <div className="text-muted mb-1">
-                    <i className="fas fa-user me-1"></i>
-                    {question.user.username}
-                  </div>
-                  <div className="text-muted small">
-                    <i className="fas fa-star me-1 text-warning"></i>
-                    {question.user.points} puan
-                  </div>
-                </div>
-              </div>
+                </Col>
+              </Row>
             </Card.Body>
           </Card>
-        ))
-      )}
-    </div>
+
+          {/* Soru Ekleme Formu */}
+          {showAddForm && (
+            <Card className="mb-4">
+              <Card.Body>
+                <AddQuestionForm
+                  onSuccess={() => {
+                    setShowAddForm(false);
+                    // Soruları yeniden yükle
+                    setCurrentPage(1);
+                  }}
+                  onCancel={() => setShowAddForm(false)}
+                />
+              </Card.Body>
+            </Card>
+          )}
+
+          {/* Hata Mesajı */}
+          {error && (
+            <div className="alert alert-danger" role="alert">
+              {error}
+            </div>
+          )}
+
+          {/* Soru Listesi */}
+          {loading ? (
+            <div className="text-center py-5">
+              <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Yükleniyor...</span>
+              </div>
+            </div>
+          ) : questions.length === 0 ? (
+            <div className="text-center py-5">
+              <p className="text-muted">Henüz soru bulunmuyor.</p>
+            </div>
+          ) : (
+            <>
+              {questions.map(question => (
+                <Card key={question._id} className="mb-3">
+                  <Card.Body>
+                    <div className="d-flex justify-content-between align-items-start">
+                      <div>
+                        <Link 
+                          to={`/questions/${question._id}`}
+                          className="text-decoration-none"
+                        >
+                          <h5 className="mb-2">{question.title}</h5>
+                        </Link>
+                        <div className="d-flex gap-3 mb-2">
+                          <span className="badge bg-primary">
+                            {question.category}
+                          </span>
+                          <small className="text-muted">
+                            <i className="fas fa-user me-1"></i>
+                            {question.user.username}
+                          </small>
+                          <small className="text-muted">
+                            <i className="fas fa-eye me-1"></i>
+                            {question.viewCount} görüntülenme
+                          </small>
+                          <small className="text-muted">
+                            <i className="fas fa-comments me-1"></i>
+                            {question.answers.length} cevap
+                          </small>
+                        </div>
+                        <p className="text-muted mb-0">
+                          {question.content.substring(0, 200)}
+                          {question.content.length > 200 ? '...' : ''}
+                        </p>
+                      </div>
+                    </div>
+                  </Card.Body>
+                </Card>
+              ))}
+
+              {/* Sayfalama */}
+              {totalPages > 1 && (
+                <div className="d-flex justify-content-center mt-4">
+                  <Pagination>
+                    <Pagination.First
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                    />
+                    <Pagination.Prev
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                    />
+                    
+                    {[...Array(totalPages)].map((_, index) => (
+                      <Pagination.Item
+                        key={index + 1}
+                        active={currentPage === index + 1}
+                        onClick={() => setCurrentPage(index + 1)}
+                      >
+                        {index + 1}
+                      </Pagination.Item>
+                    ))}
+
+                    <Pagination.Next
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                    />
+                    <Pagination.Last
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={currentPage === totalPages}
+                    />
+                  </Pagination>
+                </div>
+              )}
+            </>
+          )}
+        </Col>
+      </Row>
+    </Container>
   );
 };
 

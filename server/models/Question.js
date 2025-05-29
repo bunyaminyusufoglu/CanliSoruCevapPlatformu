@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const commentSchema = new mongoose.Schema({
+const answerSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -10,57 +10,49 @@ const commentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  isHelpful: {
+    type: Boolean,
+    default: false
+  },
+  helpfulCount: {
+    type: Number,
+    default: 0
+  },
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
 
-const courseSchema = new mongoose.Schema({
+const questionSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
     trim: true
   },
-  description: {
+  content: {
     type: String,
     required: true
   },
   category: {
     type: String,
     required: true,
-    enum: ['matematik', 'fizik', 'kimya', 'biyoloji', 'turkce', 'ingilizce']
+    enum: ['matematik', 'fizik', 'kimya', 'biyoloji', 'türkçe', 'tarih', 'coğrafya', 'diğer']
   },
-  instructor: {
+  user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  image: {
+  answers: [answerSchema],
+  tags: [{
     type: String,
-    default: null
-  },
-  duration: {
-    type: String,
-    required: true
-  },
-  rating: {
-    type: Number,
-    default: 0,
-    min: 0,
-    max: 5
-  },
-  enrolledStudents: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    trim: true
   }],
-  videoUrl: {
-    type: String
+  viewCount: {
+    type: Number,
+    default: 0
   },
-  pdfUrl: {
-    type: String
-  },
-  comments: [commentSchema],
   createdAt: {
     type: Date,
     default: Date.now
@@ -71,10 +63,17 @@ const courseSchema = new mongoose.Schema({
   }
 });
 
+// Arama için text index oluştur
+questionSchema.index({ 
+  title: 'text', 
+  content: 'text',
+  tags: 'text'
+});
+
 // Update the updatedAt timestamp before saving
-courseSchema.pre('save', function(next) {
+questionSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
 
-module.exports = mongoose.model('Course', courseSchema); 
+module.exports = mongoose.model('Question', questionSchema); 

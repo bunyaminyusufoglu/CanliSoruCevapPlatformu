@@ -15,6 +15,8 @@ app.use(express.json());
 
 // Rotalar
 app.use('/api/auth', authRoutes);
+app.use('/api/questions', require('./routes/questions'));
+app.use('/api/courses', require('./routes/courses'));
 
 const server = http.createServer(app);
 const io = new Server(server, {
