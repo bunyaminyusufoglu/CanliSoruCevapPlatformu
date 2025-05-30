@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Button, Alert, Spinner } from 'react-bootstrap';
+import { Form, Button, Alert, Spinner, Container } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import API_ENDPOINTS from '../config/api';
@@ -120,205 +120,280 @@ const Register = () => {
   };
 
   return (
-    <div className="min-vh-100 d-flex align-items-center justify-content-center" 
-         style={{background: 'linear-gradient(135deg, #b993d6 0%, #8ca6db 100%)'}}>
-      <div className="bg-white rounded-4 shadow p-4 p-md-5" 
-           style={{minWidth: 450, maxWidth: 500, width: '90%'}}>
-        <div className="d-flex flex-column align-items-center mb-4">
-          <div className="bg-primary bg-gradient rounded-circle d-flex align-items-center justify-content-center mb-3" 
-               style={{width: 70, height: 70}}>
-            <i className="fas fa-user-plus fa-2x text-white"></i>
+    <div className="min-vh-100 position-relative overflow-hidden">
+      {/* Arka plan gradient */}
+      <div 
+        className="position-absolute top-0 start-0 w-100 h-100"
+        style={{
+          background: 'linear-gradient(135deg, #4a90e2 0%, #2c3e50 100%)',
+          opacity: 0.9
+        }}
+      />
+
+      {/* Dekoratif elementler */}
+      <div 
+        className="position-absolute top-0 start-0 w-100 h-100"
+        style={{
+          backgroundImage: 'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.1) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(255,255,255,0.1) 0%, transparent 50%)',
+          pointerEvents: 'none'
+        }}
+      />
+
+      <Container className="position-relative min-vh-100 d-flex align-items-center justify-content-center py-5">
+        <div 
+          className="bg-white rounded-4 shadow-lg p-4 p-md-5 animate__animated animate__fadeIn"
+          style={{
+            minWidth: 450,
+            maxWidth: 500,
+            width: '90%',
+            backdropFilter: 'blur(10px)',
+            backgroundColor: 'rgba(255, 255, 255, 0.95)'
+          }}
+        >
+          <div className="text-center mb-5">
+            <div 
+              className="bg-primary bg-gradient rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4 shadow-sm"
+              style={{width: 80, height: 80}}
+            >
+              <i className="bi bi-person-plus-fill fs-1 text-white"></i>
+            </div>
+            <h2 className="h3 fw-bold mb-2 text-primary">Kayıt Ol</h2>
+            <p className="text-muted mb-0">Yeni bir hesap oluşturun</p>
           </div>
-          <h4 className="fw-bold mb-1">Kayıt Ol</h4>
-          <p className="text-muted mb-0">Yeni bir hesap oluşturun</p>
-        </div>
 
-        {errors.submit && (
-          <Alert variant="danger" className="py-2 mb-3">
-            {errors.submit}
-          </Alert>
-        )}
+          {errors.submit && (
+            <Alert 
+              variant="danger" 
+              className="rounded-3 shadow-sm mb-4 animate__animated animate__fadeIn"
+            >
+              <i className="bi bi-exclamation-circle me-2"></i>
+              {errors.submit}
+            </Alert>
+          )}
 
-        <Form onSubmit={handleSubmit}>
-          <Form.Group className="mb-3">
-            <div className="input-group">
-              <span className="input-group-text bg-light">
-                <i className="fas fa-user"></i>
-              </span>
-              <Form.Control
-                type="text"
-                name="ad"
-                placeholder="Ad"
-                value={formData.ad}
-                onChange={handleChange}
-                isInvalid={!!errors.ad}
-                className="bg-light border-0"
-                style={{borderRadius: '0 0.5rem 0.5rem 0'}}
-                disabled={loading}
-              />
-              <Form.Control.Feedback type="invalid">
-                {errors.ad}
-              </Form.Control.Feedback>
+          <Form onSubmit={handleSubmit} className="mb-4">
+            <div className="row g-3">
+              <div className="col-md-6">
+                <Form.Group>
+                  <Form.Label className="fw-bold text-muted mb-2">
+                    <i className="bi bi-person me-2"></i>
+                    Ad
+                  </Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="ad"
+                    placeholder="Adınız"
+                    value={formData.ad}
+                    onChange={handleChange}
+                    isInvalid={!!errors.ad}
+                    className="rounded-3 shadow-sm py-2 px-3"
+                    disabled={loading}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.ad}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </div>
+
+              <div className="col-md-6">
+                <Form.Group>
+                  <Form.Label className="fw-bold text-muted mb-2">
+                    <i className="bi bi-person me-2"></i>
+                    Soyad
+                  </Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="soyad"
+                    placeholder="Soyadınız"
+                    value={formData.soyad}
+                    onChange={handleChange}
+                    isInvalid={!!errors.soyad}
+                    className="rounded-3 shadow-sm py-2 px-3"
+                    disabled={loading}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.soyad}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </div>
             </div>
-          </Form.Group>
 
-          <Form.Group className="mb-3">
-            <div className="input-group">
-              <span className="input-group-text bg-light">
-                <i className="fas fa-user"></i>
-              </span>
-              <Form.Control
-                type="text"
-                name="soyad"
-                placeholder="Soyad"
-                value={formData.soyad}
-                onChange={handleChange}
-                isInvalid={!!errors.soyad}
-                className="bg-light border-0"
-                style={{borderRadius: '0 0.5rem 0.5rem 0'}}
-                disabled={loading}
-              />
-              <Form.Control.Feedback type="invalid">
-                {errors.soyad}
-              </Form.Control.Feedback>
-            </div>
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <div className="input-group">
-              <span className="input-group-text bg-light">
-                <i className="fas fa-user-tag"></i>
-              </span>
+            <Form.Group className="mt-3">
+              <Form.Label className="fw-bold text-muted mb-2">
+                <i className="bi bi-person-badge me-2"></i>
+                Kullanıcı Adı
+              </Form.Label>
               <Form.Control
                 type="text"
                 name="username"
-                placeholder="Kullanıcı Adı"
+                placeholder="Kullanıcı adınız"
                 value={formData.username}
                 onChange={handleChange}
                 isInvalid={!!errors.username}
-                className="bg-light border-0"
-                style={{borderRadius: '0 0.5rem 0.5rem 0'}}
+                className="rounded-3 shadow-sm py-2 px-3"
                 disabled={loading}
               />
               <Form.Control.Feedback type="invalid">
                 {errors.username}
               </Form.Control.Feedback>
-            </div>
-          </Form.Group>
+            </Form.Group>
 
-          <Form.Group className="mb-3">
-            <div className="input-group">
-              <span className="input-group-text bg-light">
-                <i className="fas fa-envelope"></i>
-              </span>
+            <Form.Group className="mt-3">
+              <Form.Label className="fw-bold text-muted mb-2">
+                <i className="bi bi-envelope me-2"></i>
+                Email Adresi
+              </Form.Label>
               <Form.Control
                 type="email"
                 name="email"
-                placeholder="Email"
+                placeholder="ornek@email.com"
                 value={formData.email}
                 onChange={handleChange}
                 isInvalid={!!errors.email}
-                className="bg-light border-0"
-                style={{borderRadius: '0 0.5rem 0.5rem 0'}}
+                className="rounded-3 shadow-sm py-2 px-3"
                 disabled={loading}
               />
               <Form.Control.Feedback type="invalid">
                 {errors.email}
               </Form.Control.Feedback>
-            </div>
-          </Form.Group>
+            </Form.Group>
 
-          <Form.Group className="mb-3">
-            <div className="input-group">
-              <span className="input-group-text bg-light">
-                <i className="fas fa-lock"></i>
-              </span>
+            <Form.Group className="mt-3">
+              <Form.Label className="fw-bold text-muted mb-2">
+                <i className="bi bi-lock me-2"></i>
+                Şifre
+              </Form.Label>
               <Form.Control
                 type="password"
                 name="password"
-                placeholder="Şifre"
+                placeholder="••••••••"
                 value={formData.password}
                 onChange={handleChange}
                 isInvalid={!!errors.password}
-                className="bg-light border-0"
-                style={{borderRadius: '0 0.5rem 0.5rem 0'}}
+                className="rounded-3 shadow-sm py-2 px-3"
                 disabled={loading}
               />
               <Form.Control.Feedback type="invalid">
                 {errors.password}
               </Form.Control.Feedback>
-            </div>
-          </Form.Group>
+            </Form.Group>
 
-          <Form.Group className="mb-3">
-            <div className="input-group">
-              <span className="input-group-text bg-light">
-                <i className="fas fa-lock"></i>
-              </span>
+            <Form.Group className="mt-3">
+              <Form.Label className="fw-bold text-muted mb-2">
+                <i className="bi bi-lock-fill me-2"></i>
+                Şifre Tekrar
+              </Form.Label>
               <Form.Control
                 type="password"
                 name="confirmPassword"
-                placeholder="Şifre Tekrar"
+                placeholder="••••••••"
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 isInvalid={!!errors.confirmPassword}
-                className="bg-light border-0"
-                style={{borderRadius: '0 0.5rem 0.5rem 0'}}
+                className="rounded-3 shadow-sm py-2 px-3"
                 disabled={loading}
               />
               <Form.Control.Feedback type="invalid">
                 {errors.confirmPassword}
               </Form.Control.Feedback>
+            </Form.Group>
+
+            <Form.Group className="mt-3">
+              <Form.Label className="fw-bold text-muted mb-2">
+                <i className="bi bi-person-workspace me-2"></i>
+                Hesap Türü
+              </Form.Label>
+              <div className="d-flex gap-3">
+                <Form.Check
+                  type="radio"
+                  id="student"
+                  name="userType"
+                  value="student"
+                  label="Öğrenci"
+                  checked={formData.userType === 'student'}
+                  onChange={handleChange}
+                  className="flex-grow-1"
+                />
+                <Form.Check
+                  type="radio"
+                  id="teacher"
+                  name="userType"
+                  value="teacher"
+                  label="Eğitmen"
+                  checked={formData.userType === 'teacher'}
+                  onChange={handleChange}
+                  className="flex-grow-1"
+                />
+              </div>
+            </Form.Group>
+
+            <div className="d-grid mt-4">
+              <Button 
+                type="submit" 
+                variant="primary" 
+                className="rounded-pill py-3 shadow-sm hover-lift"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Spinner
+                      as="span"
+                      animation="border"
+                      size="sm"
+                      role="status"
+                      aria-hidden="true"
+                      className="me-2"
+                    />
+                    Kayıt Yapılıyor...
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-person-plus me-2"></i>
+                    Kayıt Ol
+                  </>
+                )}
+              </Button>
             </div>
-          </Form.Group>
 
-          <Form.Group className="mb-3">
-            <Form.Select
-              name="userType"
-              value={formData.userType}
-              onChange={handleChange}
-              disabled={loading}
-            >
-              <option value="student">Öğrenci</option>
-              <option value="teacher">Öğretmen</option>
-            </Form.Select>
-          </Form.Group>
+            <div className="text-center mt-4">
+              <p className="text-muted mb-0">
+                Zaten hesabınız var mı?{' '}
+                <Link 
+                  to="/login" 
+                  className="text-primary text-decoration-none fw-bold hover-lift"
+                >
+                  Giriş Yap
+                </Link>
+              </p>
+            </div>
+          </Form>
+        </div>
+      </Container>
 
-          <div className="d-grid mb-3">
-            <Button 
-              type="submit" 
-              variant="primary" 
-              className="rounded-pill py-2" 
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <Spinner
-                    as="span"
-                    animation="border"
-                    size="sm"
-                    role="status"
-                    aria-hidden="true"
-                    className="me-2"
-                  />
-                  Kayıt Yapılıyor...
-                </>
-              ) : (
-                'KAYIT OL'
-              )}
-            </Button>
-          </div>
-
-          <div className="text-center">
-            <p className="mb-0">
-              Zaten hesabınız var mı?{' '}
-              <Link to="/login" className="text-primary text-decoration-none">
-                Giriş Yap
-              </Link>
-            </p>
-          </div>
-        </Form>
-      </div>
+      <style jsx>{`
+        .hover-lift {
+          transition: transform 0.2s ease-in-out;
+        }
+        .hover-lift:hover {
+          transform: translateY(-2px);
+        }
+        .animate__animated {
+          animation-duration: 0.6s;
+        }
+        .animate__fadeIn {
+          animation-name: fadeIn;
+        }
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 };

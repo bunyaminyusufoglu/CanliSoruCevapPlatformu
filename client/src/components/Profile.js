@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Badge, Spinner } from 'react-bootstrap';
+import { Container, Row, Col, Card, Badge, Spinner, Form, Button, Alert } from 'react-bootstrap';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -66,208 +66,306 @@ const Profile = () => {
     if (loading) {
         return (
             <div className="min-vh-100 d-flex align-items-center justify-content-center">
-                <Spinner animation="border" variant="primary" />
+                <Spinner animation="border" variant="primary" className="shadow-sm" />
             </div>
         );
     }
 
     return (
-        <Container className="py-5">
-            <Row className="g-4">
-                {/* Sol Kolon - Profil Bilgileri */}
-                <Col lg={8}>
-                    <Card className="border-0 shadow-sm">
-                        <Card.Body className="p-4">
-                            <div className="d-flex justify-content-between align-items-center mb-4">
-                                <div>
-                                    <h4 className="mb-1">Profil Bilgileri</h4>
-                                    <p className="text-muted mb-0">Kişisel bilgilerinizi görüntüleyin ve düzenleyin</p>
+        <div className="min-vh-100 py-5" style={{background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)'}}>
+            <Container>
+                <Row className="g-4">
+                    {/* Sol Kolon - Profil Bilgileri */}
+                    <Col lg={8}>
+                        <Card className="border-0 shadow-lg rounded-4 animate__animated animate__fadeIn">
+                            <Card.Body className="p-4 p-md-5">
+                                <div className="d-flex justify-content-between align-items-center mb-4">
+                                    <div>
+                                        <h3 className="fw-bold mb-2 text-primary">Profil Bilgileri</h3>
+                                        <p className="text-muted mb-0">Kişisel bilgilerinizi görüntüleyin ve düzenleyin</p>
+                                    </div>
+                                    <Button 
+                                        variant={isEditing ? "outline-secondary" : "primary"}
+                                        className="rounded-pill px-4 py-2 shadow-sm hover-lift"
+                                        onClick={() => setIsEditing(!isEditing)}
+                                    >
+                                        <i className={`bi bi-${isEditing ? 'x-lg' : 'pencil'} me-2`}></i>
+                                        {isEditing ? 'İptal' : 'Düzenle'}
+                                    </Button>
                                 </div>
-                                <button 
-                                    className={`btn btn-${isEditing ? 'secondary' : 'primary'} btn-sm px-3`}
-                                    onClick={() => setIsEditing(!isEditing)}
-                                >
-                                    <i className={`fas fa-${isEditing ? 'times' : 'edit'} me-1`}></i>
-                                    {isEditing ? 'İptal' : 'Düzenle'}
-                                </button>
-                            </div>
 
-                            {message && <div className="alert alert-success py-2">{message}</div>}
-                            {error && <div className="alert alert-danger py-2">{error}</div>}
+                                {message && (
+                                    <Alert variant="success" className="rounded-3 shadow-sm mb-4 animate__animated animate__fadeIn">
+                                        <i className="bi bi-check-circle me-2"></i>
+                                        {message}
+                                    </Alert>
+                                )}
+                                {error && (
+                                    <Alert variant="danger" className="rounded-3 shadow-sm mb-4 animate__animated animate__fadeIn">
+                                        <i className="bi bi-exclamation-circle me-2"></i>
+                                        {error}
+                                    </Alert>
+                                )}
 
-                            {isEditing ? (
-                                <form onSubmit={handleSubmit}>
-                                    <Row>
-                                        <Col md={6}>
-                                            <div className="mb-3">
-                                                <label className="form-label">Ad</label>
-                                                <input
-                                                    type="text"
-                                                    className="form-control bg-light"
-                                                    name="ad"
-                                                    value={profile.ad}
-                                                    onChange={handleChange}
-                                                    required
-                                                />
-                                            </div>
-                                        </Col>
-                                        <Col md={6}>
-                                            <div className="mb-3">
-                                                <label className="form-label">Soyad</label>
-                                                <input
-                                                    type="text"
-                                                    className="form-control bg-light"
-                                                    name="soyad"
-                                                    value={profile.soyad}
-                                                    onChange={handleChange}
-                                                    required
-                                                />
-                                            </div>
-                                        </Col>
-                                    </Row>
-                                    <div className="mb-3">
-                                        <label className="form-label">Kullanıcı Adı</label>
-                                        <input
-                                            type="text"
-                                            className="form-control bg-light"
-                                            name="username"
-                                            value={profile.username}
-                                            onChange={handleChange}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">E-posta</label>
-                                        <input
-                                            type="email"
-                                            className="form-control bg-light"
-                                            value={profile.email}
-                                            disabled
-                                        />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Unvan</label>
-                                        <input
-                                            type="text"
-                                            className="form-control bg-light"
-                                            name="unvan"
-                                            value={profile.unvan}
-                                            onChange={handleChange}
-                                        />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Hakkımda</label>
-                                        <textarea
-                                            className="form-control bg-light"
-                                            name="bio"
-                                            value={profile.bio}
-                                            onChange={handleChange}
-                                            rows="3"
-                                        />
-                                    </div>
-                                    <div className="d-grid">
-                                        <button type="submit" className="btn btn-primary rounded-pill py-2">
-                                            <i className="fas fa-save me-2"></i>Kaydet
-                                        </button>
-                                    </div>
-                                </form>
-                            ) : (
-                                <div>
-                                    <Row>
-                                        <Col md={6}>
-                                            <p className="mb-2"><strong>Ad Soyad:</strong> {profile.ad} {profile.soyad}</p>
-                                            <p className="mb-2"><strong>Kullanıcı Adı:</strong> {profile.username}</p>
-                                            <p className="mb-2"><strong>E-posta:</strong> {profile.email}</p>
-                                        </Col>
-                                        <Col md={6}>
-                                            <p className="mb-2"><strong>Unvan:</strong> {profile.unvan || 'Belirtilmemiş'}</p>
-                                            <p className="mb-2"><strong>Hakkımda:</strong> {profile.bio || 'Belirtilmemiş'}</p>
-                                        </Col>
-                                    </Row>
-                                </div>
-                            )}
-                        </Card.Body>
-                    </Card>
-                </Col>
+                                {isEditing ? (
+                                    <Form onSubmit={handleSubmit}>
+                                        <Row className="g-3">
+                                            <Col md={6}>
+                                                <Form.Group>
+                                                    <Form.Label className="fw-bold text-muted mb-2">
+                                                        <i className="bi bi-person me-2"></i>
+                                                        Ad
+                                                    </Form.Label>
+                                                    <Form.Control
+                                                        type="text"
+                                                        name="ad"
+                                                        value={profile.ad}
+                                                        onChange={handleChange}
+                                                        required
+                                                        className="rounded-3 shadow-sm py-2 px-3"
+                                                    />
+                                                </Form.Group>
+                                            </Col>
+                                            <Col md={6}>
+                                                <Form.Group>
+                                                    <Form.Label className="fw-bold text-muted mb-2">
+                                                        <i className="bi bi-person me-2"></i>
+                                                        Soyad
+                                                    </Form.Label>
+                                                    <Form.Control
+                                                        type="text"
+                                                        name="soyad"
+                                                        value={profile.soyad}
+                                                        onChange={handleChange}
+                                                        required
+                                                        className="rounded-3 shadow-sm py-2 px-3"
+                                                    />
+                                                </Form.Group>
+                                            </Col>
+                                        </Row>
 
-                {/* Sağ Kolon - Puanlar ve Rozetler */}
-                <Col lg={4}>
-                    {/* Puan Kartı */}
-                    <Card className="border-0 shadow-sm mb-4">
-                        <Card.Body className="p-4">
-                            <h5 className="mb-4">Puanlarım</h5>
-                            <div className="d-flex align-items-center mb-3">
-                                <div className="bg-primary bg-opacity-10 rounded-circle p-3 me-3">
-                                    <i className="fas fa-star text-primary"></i>
-                                </div>
-                                <div>
-                                    <h3 className="mb-0">{profile.points}</h3>
-                                    <p className="text-muted mb-0">Toplam Puan</p>
-                                </div>
-                            </div>
-                            <hr />
-                            <div className="row g-3">
-                                <div className="col-6">
+                                        <Form.Group className="mt-3">
+                                            <Form.Label className="fw-bold text-muted mb-2">
+                                                <i className="bi bi-person-badge me-2"></i>
+                                                Kullanıcı Adı
+                                            </Form.Label>
+                                            <Form.Control
+                                                type="text"
+                                                name="username"
+                                                value={profile.username}
+                                                onChange={handleChange}
+                                                required
+                                                className="rounded-3 shadow-sm py-2 px-3"
+                                            />
+                                        </Form.Group>
+
+                                        <Form.Group className="mt-3">
+                                            <Form.Label className="fw-bold text-muted mb-2">
+                                                <i className="bi bi-envelope me-2"></i>
+                                                E-posta
+                                            </Form.Label>
+                                            <Form.Control
+                                                type="email"
+                                                value={profile.email}
+                                                disabled
+                                                className="rounded-3 shadow-sm py-2 px-3 bg-light"
+                                            />
+                                        </Form.Group>
+
+                                        <Form.Group className="mt-3">
+                                            <Form.Label className="fw-bold text-muted mb-2">
+                                                <i className="bi bi-award me-2"></i>
+                                                Unvan
+                                            </Form.Label>
+                                            <Form.Control
+                                                type="text"
+                                                name="unvan"
+                                                value={profile.unvan}
+                                                onChange={handleChange}
+                                                className="rounded-3 shadow-sm py-2 px-3"
+                                            />
+                                        </Form.Group>
+
+                                        <Form.Group className="mt-3">
+                                            <Form.Label className="fw-bold text-muted mb-2">
+                                                <i className="bi bi-person-lines-fill me-2"></i>
+                                                Hakkımda
+                                            </Form.Label>
+                                            <Form.Control
+                                                as="textarea"
+                                                name="bio"
+                                                value={profile.bio}
+                                                onChange={handleChange}
+                                                rows="3"
+                                                className="rounded-3 shadow-sm py-2 px-3"
+                                            />
+                                        </Form.Group>
+
+                                        <div className="d-grid mt-4">
+                                            <Button 
+                                                type="submit" 
+                                                variant="primary"
+                                                className="rounded-pill py-3 shadow-sm hover-lift"
+                                            >
+                                                <i className="bi bi-save me-2"></i>
+                                                Kaydet
+                                            </Button>
+                                        </div>
+                                    </Form>
+                                ) : (
+                                    <div className="animate__animated animate__fadeIn">
+                                        <Row className="g-4">
+                                            <Col md={6}>
+                                                <div className="bg-light rounded-4 p-4 shadow-sm">
+                                                    <h6 className="fw-bold text-primary mb-3">
+                                                        <i className="bi bi-person me-2"></i>
+                                                        Kişisel Bilgiler
+                                                    </h6>
+                                                    <p className="mb-2">
+                                                        <span className="text-muted">Ad Soyad:</span><br />
+                                                        <strong>{profile.ad} {profile.soyad}</strong>
+                                                    </p>
+                                                    <p className="mb-2">
+                                                        <span className="text-muted">Kullanıcı Adı:</span><br />
+                                                        <strong>{profile.username}</strong>
+                                                    </p>
+                                                    <p className="mb-0">
+                                                        <span className="text-muted">E-posta:</span><br />
+                                                        <strong>{profile.email}</strong>
+                                                    </p>
+                                                </div>
+                                            </Col>
+                                            <Col md={6}>
+                                                <div className="bg-light rounded-4 p-4 shadow-sm">
+                                                    <h6 className="fw-bold text-primary mb-3">
+                                                        <i className="bi bi-info-circle me-2"></i>
+                                                        Ek Bilgiler
+                                                    </h6>
+                                                    <p className="mb-2">
+                                                        <span className="text-muted">Unvan:</span><br />
+                                                        <strong>{profile.unvan || 'Belirtilmemiş'}</strong>
+                                                    </p>
+                                                    <p className="mb-0">
+                                                        <span className="text-muted">Hakkımda:</span><br />
+                                                        <strong>{profile.bio || 'Belirtilmemiş'}</strong>
+                                                    </p>
+                                                </div>
+                                            </Col>
+                                        </Row>
+                                    </div>
+                                )}
+                            </Card.Body>
+                        </Card>
+                    </Col>
+
+                    {/* Sağ Kolon - Puanlar ve Rozetler */}
+                    <Col lg={4}>
+                        {/* Puan Kartı */}
+                        <Card className="border-0 shadow-lg rounded-4 mb-4 animate__animated animate__fadeIn">
+                            <Card.Body className="p-4">
+                                <h4 className="fw-bold text-primary mb-4">
+                                    <i className="bi bi-star me-2"></i>
+                                    Puanlarım
+                                </h4>
+                                <div className="bg-primary bg-opacity-10 rounded-4 p-4 mb-4">
                                     <div className="d-flex align-items-center">
-                                        <i className="fas fa-question-circle text-primary me-2"></i>
+                                        <div className="bg-primary rounded-circle p-3 me-3 shadow-sm">
+                                            <i className="bi bi-star-fill text-white fs-4"></i>
+                                        </div>
                                         <div>
-                                            <h6 className="mb-0">{profile.questionCount}</h6>
+                                            <h2 className="fw-bold mb-0">{profile.points}</h2>
+                                            <p className="text-muted mb-0">Toplam Puan</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="row g-3">
+                                    <div className="col-6">
+                                        <div className="bg-light rounded-4 p-3 text-center shadow-sm hover-lift">
+                                            <i className="bi bi-question-circle text-primary fs-4 mb-2"></i>
+                                            <h4 className="fw-bold mb-1">{profile.questionCount}</h4>
                                             <small className="text-muted">Soru</small>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="col-6">
-                                    <div className="d-flex align-items-center">
-                                        <i className="fas fa-comment-dots text-success me-2"></i>
-                                        <div>
-                                            <h6 className="mb-0">{profile.answerCount}</h6>
+                                    <div className="col-6">
+                                        <div className="bg-light rounded-4 p-3 text-center shadow-sm hover-lift">
+                                            <i className="bi bi-chat-dots text-success fs-4 mb-2"></i>
+                                            <h4 className="fw-bold mb-1">{profile.answerCount}</h4>
                                             <small className="text-muted">Cevap</small>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="col-6">
-                                    <div className="d-flex align-items-center">
-                                        <i className="fas fa-thumbs-up text-info me-2"></i>
-                                        <div>
-                                            <h6 className="mb-0">{profile.helpfulAnswerCount}</h6>
+                                    <div className="col-12">
+                                        <div className="bg-light rounded-4 p-3 text-center shadow-sm hover-lift">
+                                            <i className="bi bi-hand-thumbs-up text-info fs-4 mb-2"></i>
+                                            <h4 className="fw-bold mb-1">{profile.helpfulAnswerCount}</h4>
                                             <small className="text-muted">Faydalı Cevap</small>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </Card.Body>
-                    </Card>
+                            </Card.Body>
+                        </Card>
 
-                    {/* Rozetler Kartı */}
-                    <Card className="border-0 shadow-sm">
-                        <Card.Body className="p-4">
-                            <h5 className="mb-4">Rozetlerim</h5>
-                            {profile.badges.length === 0 ? (
-                                <div className="text-center text-muted py-3">
-                                    <i className="fas fa-medal fa-2x mb-2"></i>
-                                    <p className="mb-0">Henüz rozet kazanılmadı</p>
-                                </div>
-                            ) : (
-                                <div className="row g-3">
-                                    {profile.badges.map((badge, index) => (
-                                        <div key={index} className="col-6">
-                                            <div className="text-center p-3 bg-light rounded">
-                                                <i className={`${badge.icon} fa-2x mb-2 text-primary`}></i>
-                                                <h6 className="mb-1">{badge.name}</h6>
-                                                <small className="text-muted d-block">{badge.description}</small>
-                                                <small className="text-muted d-block mt-1">
-                                                    {new Date(badge.awardedAt).toLocaleDateString('tr-TR')}
-                                                </small>
-                                            </div>
+                        {/* Rozetler Kartı */}
+                        <Card className="border-0 shadow-lg rounded-4 animate__animated animate__fadeIn">
+                            <Card.Body className="p-4">
+                                <h4 className="fw-bold text-primary mb-4">
+                                    <i className="bi bi-award me-2"></i>
+                                    Rozetlerim
+                                </h4>
+                                {profile.badges.length === 0 ? (
+                                    <div className="text-center text-muted py-4">
+                                        <div className="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                                             style={{width: 80, height: 80}}>
+                                            <i className="bi bi-award fs-1"></i>
                                         </div>
-                                    ))}
-                                </div>
-                            )}
-                        </Card.Body>
-                    </Card>
-                </Col>
-            </Row>
-        </Container>
+                                        <p className="mb-0">Henüz rozet kazanılmadı</p>
+                                    </div>
+                                ) : (
+                                    <div className="row g-3">
+                                        {profile.badges.map((badge, index) => (
+                                            <div key={index} className="col-6">
+                                                <div className="bg-light rounded-4 p-3 text-center shadow-sm hover-lift">
+                                                    <div className="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" 
+                                                         style={{width: 50, height: 50}}>
+                                                        <i className="bi bi-award-fill text-primary"></i>
+                                                    </div>
+                                                    <h6 className="fw-bold mb-1">{badge.name}</h6>
+                                                    <small className="text-muted">{badge.description}</small>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </Card.Body>
+                        </Card>
+                    </Col>
+                </Row>
+            </Container>
+
+            <style jsx>{`
+                .hover-lift {
+                    transition: transform 0.2s ease-in-out;
+                }
+                .hover-lift:hover {
+                    transform: translateY(-2px);
+                }
+                .animate__animated {
+                    animation-duration: 0.6s;
+                }
+                .animate__fadeIn {
+                    animation-name: fadeIn;
+                }
+                @keyframes fadeIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+            `}</style>
+        </div>
     );
 };
 
