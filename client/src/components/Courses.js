@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Form, InputGroup } from 'react-bootstrap';
-import { FaSearch, FaBook, FaUser, FaClock, FaStar } from 'react-icons/fa';
+import { Container, Row, Col, Card, Button, Form, InputGroup, Spinner, Alert } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 
 const Courses = () => {
@@ -9,15 +9,30 @@ const Courses = () => {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   useEffect(() => {
     fetchCourses();
-  }, []);
+  }, [debouncedSearchTerm, selectedCategory]);
 
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/courses');
+      const response = await axios.get('/api/courses', {
+        params: {
+          search: debouncedSearchTerm,
+          category: selectedCategory !== 'all' ? selectedCategory : undefined
+        }
+      });
       setCourses(response.data);
       setError('');
     } catch (err) {
@@ -35,119 +50,221 @@ const Courses = () => {
     return matchesSearch && matchesCategory;
   });
 
-  if (loading) {
+  if (loading && courses.length === 0) {
     return (
-      <Container className="py-5">
-        <div className="d-flex justify-content-center">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Yükleniyor...</span>
+      <div className="min-vh-100 py-5" style={{background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)'}}>
+        <Container>
+          <div className="text-center">
+            <Spinner animation="border" variant="primary" className="shadow-sm" />
+            <p className="text-muted mt-3">Dersler yükleniyor...</p>
           </div>
-        </div>
-      </Container>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container className="py-5">
-        <div className="alert alert-danger" role="alert">
-          {error}
-        </div>
-      </Container>
+        </Container>
+      </div>
     );
   }
 
   return (
-    <Container className="py-5">
-      <h2 className="mb-4">Dersler</h2>
-      
-      {/* Arama ve Filtreleme */}
-      <Row className="mb-4">
-        <Col md={6} className="mb-3 mb-md-0">
-          <InputGroup>
-            <InputGroup.Text className="bg-light">
-              <FaSearch />
-            </InputGroup.Text>
-            <Form.Control
-              type="text"
-              placeholder="Ders ara..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-light border-0"
-            />
-          </InputGroup>
-        </Col>
-        <Col md={6}>
-          <Form.Select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="bg-light border-0"
-          >
-            <option value="all">Tüm Kategoriler</option>
-            <option value="matematik">Matematik</option>
-            <option value="fizik">Fizik</option>
-            <option value="kimya">Kimya</option>
-            <option value="biyoloji">Biyoloji</option>
-            <option value="turkce">Türkçe</option>
-            <option value="ingilizce">İngilizce</option>
-          </Form.Select>
-        </Col>
-      </Row>
-
-      {/* Ders Listesi */}
-      <Row>
-        {filteredCourses.length === 0 ? (
-          <Col>
-            <div className="text-center py-5">
-              <FaBook className="text-muted mb-3" size={48} />
-              <h4>Ders bulunamadı</h4>
-              <p className="text-muted">Arama kriterlerinize uygun ders bulunamadı.</p>
+    <div className="min-vh-100 py-4 py-md-5" style={{background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)'}}>
+      <Container>
+        <Card className="border-0 shadow-lg rounded-4 mb-4 animate__animated animate__fadeIn">
+          <Card.Header className="bg-primary bg-gradient text-white py-3 py-md-4">
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+              <h3 className="h4 h3-md fw-bold mb-0">
+                <i className="bi bi-book me-2"></i>
+                Dersler
+              </h3>
+              <Button 
+                variant="light" 
+                className="rounded-pill px-4 hover-lift"
+                as={Link}
+                to="/courses/new"
+              >
+                <i className="bi bi-plus-lg me-2"></i>
+                Yeni Ders
+              </Button>
             </div>
-          </Col>
-        ) : (
-          filteredCourses.map((course) => (
-            <Col key={course._id} md={6} lg={4} className="mb-4">
-              <Card className="h-100 shadow-sm hover-shadow">
-                <Card.Img
-                  variant="top"
-                  src={course.image || 'https://via.placeholder.com/300x200'}
-                  alt={course.title}
-                  style={{ height: 200, objectFit: 'cover' }}
-                />
-                <Card.Body className="d-flex flex-column">
-                  <div className="mb-2">
-                    <span className="badge bg-primary">{course.category}</span>
-                  </div>
-                  <Card.Title className="h5 mb-3">{course.title}</Card.Title>
-                  <Card.Text className="text-muted flex-grow-1">
-                    {course.description}
-                  </Card.Text>
-                  <div className="d-flex justify-content-between align-items-center mt-3">
-                    <div className="d-flex align-items-center">
-                      <FaUser className="text-muted me-2" />
-                      <small className="text-muted">{course.instructor}</small>
-                    </div>
-                    <div className="d-flex align-items-center">
-                      <FaClock className="text-muted me-2" />
-                      <small className="text-muted">{course.duration}</small>
-                    </div>
-                  </div>
-                  <div className="d-flex justify-content-between align-items-center mt-3">
-                    <div className="d-flex align-items-center">
-                      <FaStar className="text-warning me-1" />
-                      <span className="text-muted">{course.rating || 'Yeni'}</span>
-                    </div>
-                    <Button variant="primary" size="sm">
-                      Derse Katıl
-                    </Button>
-                  </div>
-                </Card.Body>
-              </Card>
-            </Col>
-          ))
+          </Card.Header>
+          <Card.Body className="p-3 p-md-4">
+            <Row className="g-3">
+              <Col xs={12} md={8}>
+                <InputGroup>
+                  <InputGroup.Text className="bg-light border-0">
+                    <i className="bi bi-search"></i>
+                  </InputGroup.Text>
+                  <Form.Control
+                    type="text"
+                    placeholder="Ders ara..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="bg-light border-0"
+                  />
+                </InputGroup>
+              </Col>
+              <Col xs={12} md={4}>
+                <Form.Select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="bg-light border-0"
+                >
+                  <option value="all">Tüm Kategoriler</option>
+                  <option value="matematik">Matematik</option>
+                  <option value="fizik">Fizik</option>
+                  <option value="kimya">Kimya</option>
+                  <option value="biyoloji">Biyoloji</option>
+                  <option value="turkce">Türkçe</option>
+                  <option value="ingilizce">İngilizce</option>
+                </Form.Select>
+              </Col>
+            </Row>
+          </Card.Body>
+        </Card>
+
+        {error && (
+          <Alert 
+            variant="danger" 
+            className="rounded-3 shadow-sm mb-4 animate__animated animate__fadeIn"
+          >
+            <i className="bi bi-exclamation-circle me-2"></i>
+            {error}
+          </Alert>
         )}
-      </Row>
-    </Container>
+
+        <div className="courses-list">
+          {loading ? (
+            <div className="text-center py-5">
+              <Spinner animation="border" variant="primary" size="sm" />
+              <span className="ms-2 text-muted">Yükleniyor...</span>
+            </div>
+          ) : filteredCourses.length === 0 ? (
+            <Card className="border-0 shadow-lg rounded-4 animate__animated animate__fadeIn">
+              <Card.Body className="text-center p-5">
+                <div className="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-4" 
+                     style={{width: 80, height: 80}}>
+                  <i className="bi bi-book fs-1 text-primary"></i>
+                </div>
+                <h4 className="fw-bold mb-3">Ders Bulunamadı</h4>
+                <p className="text-muted mb-4">Arama kriterlerinize uygun ders bulunamadı.</p>
+                <Button 
+                  variant="primary" 
+                  className="rounded-pill px-4 hover-lift"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setSelectedCategory('all');
+                  }}
+                >
+                  <i className="bi bi-arrow-counterclockwise me-2"></i>
+                  Filtreleri Temizle
+                </Button>
+              </Card.Body>
+            </Card>
+          ) : (
+            <Row className="g-3 g-md-4">
+              {filteredCourses.map(course => (
+                <Col key={course._id} xs={12} sm={6} lg={4}>
+                  <Card className="h-100 border-0 shadow-lg rounded-4 hover-lift animate__animated animate__fadeIn">
+                    <Card.Body className="p-4">
+                      <div className="d-flex align-items-center mb-3">
+                        <div className={`bg-${course.color || 'primary'} bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3`}
+                             style={{width: 48, height: 48, minWidth: 48}}>
+                          <i className={`bi bi-book text-${course.color || 'primary'} fs-4`}></i>
+                        </div>
+                        <div>
+                          <h5 className="h5 h4-md fw-bold mb-1">{course.title}</h5>
+                          <span className="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2">
+                            <i className="bi bi-tag me-1"></i>
+                            {course.category}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-muted mb-4 fs-6 fs-md-5">
+                        {course.description.substring(0, 150)}
+                        {course.description.length > 150 ? '...' : ''}
+                      </p>
+                      <div className="d-flex flex-wrap gap-2 mb-4">
+                        <span className="badge bg-light text-dark rounded-pill px-3 py-2">
+                          <i className="bi bi-person me-1"></i>
+                          {course.instructor}
+                        </span>
+                        <span className="badge bg-light text-dark rounded-pill px-3 py-2">
+                          <i className="bi bi-clock me-1"></i>
+                          {course.duration} saat
+                        </span>
+                        <span className="badge bg-light text-dark rounded-pill px-3 py-2">
+                          <i className="bi bi-star me-1"></i>
+                          {course.rating || 'Yeni'}
+                        </span>
+                      </div>
+                      <Button 
+                        as={Link}
+                        to={`/courses/${course._id}`}
+                        variant="primary" 
+                        className="w-100 rounded-pill hover-lift"
+                      >
+                        <i className="bi bi-arrow-right me-2"></i>
+                        Derse Git
+                      </Button>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          )}
+        </div>
+
+        <style jsx>{`
+          .hover-lift {
+            transition: transform 0.2s ease-in-out;
+          }
+          .hover-lift:hover {
+            transform: translateY(-2px);
+          }
+          .animate__animated {
+            animation-duration: 0.6s;
+          }
+          .animate__fadeIn {
+            animation-name: fadeIn;
+          }
+          @keyframes fadeIn {
+            from {
+              opacity: 0;
+              transform: translateY(20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          @media (max-width: 768px) {
+            .h3-md {
+              font-size: 1.5rem;
+            }
+            .h4-md {
+              font-size: 1.25rem;
+            }
+            .fs-5 {
+              font-size: 1.1rem !important;
+            }
+            .fs-6 {
+              font-size: 1rem !important;
+            }
+          }
+          @media (max-width: 576px) {
+            .h3-md {
+              font-size: 1.25rem;
+            }
+            .h4-md {
+              font-size: 1.1rem;
+            }
+            .fs-5 {
+              font-size: 1rem !important;
+            }
+            .fs-6 {
+              font-size: 0.9rem !important;
+            }
+          }
+        `}</style>
+      </Container>
+    </div>
   );
 };
 

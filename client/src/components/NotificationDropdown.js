@@ -1,268 +1,224 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Dropdown, Badge, ListGroup, Button, Spinner } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import React, { useState, useEffect } from 'react';
+import { Dropdown, Badge, Spinner } from 'react-bootstrap';
 import axios from 'axios';
-import { io } from 'socket.io-client';
-import { formatDistanceToNow } from 'date-fns';
-import { tr } from 'date-fns/locale';
+import { useAuth } from '../contexts/AuthContext';
 
 const NotificationDropdown = () => {
+  const { currentUser } = useAuth();
   const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [show, setShow] = useState(false);
-  const [selectedType, setSelectedType] = useState('all');
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const socketRef = useRef(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Socket.io bağlantısı
-  useEffect(() => {
-    if (user) {
-      socketRef.current = io('http://localhost:5000');
-      socketRef.current.emit('userLogin', user._id);
-
-      socketRef.current.on('notification', (notification) => {
-        setNotifications(prev => [notification, ...prev]);
-        setUnreadCount(prev => prev + 1);
+  const fetchNotifications = async () => {
+    if (!currentUser) return;
+    
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get('/api/notifications', {
+        headers: { Authorization: `Bearer ${currentUser.token}` }
       });
-
-      // Yeni ders bildirimi
-      socketRef.current.on('newCourse', (course) => {
-        setNotifications(prev => [
-          {
-            _id: `course-${course.id}-${course.createdAt}`,
-            type: 'course',
-            isRead: false,
-            createdAt: course.createdAt,
-            text: `Yeni ders eklendi: ${course.title}`,
-            link: `/courses` // veya ilgili kurs sayfası
-          },
-          ...prev
-        ]);
-        setUnreadCount(prev => prev + 1);
-      });
-
-      // Yeni mesaj bildirimi
-      socketRef.current.on('newMessage', ({ roomId, message }) => {
-        setNotifications(prev => [
-          {
-            _id: `msg-${roomId}-${message.time}`,
-            type: 'message',
-            isRead: false,
-            createdAt: message.time,
-            text: `Yeni mesaj (${message.username}): ${message.message}`,
-            link: `/livechat?room=${roomId}`
-          },
-          ...prev
-        ]);
-        setUnreadCount(prev => prev + 1);
-      });
-
-      return () => {
-        if (socketRef.current) {
-          socketRef.current.off('notification');
-          socketRef.current.off('newCourse');
-          socketRef.current.off('newMessage');
-          socketRef.current.disconnect();
-        }
-      };
+      setNotifications(response.data);
+    } catch (err) {
+      setError('Bildirimler yüklenirken bir hata oluştu');
+      console.error('Bildirim yükleme hatası:', err);
+    } finally {
+      setLoading(false);
     }
-  }, [user]);
+  };
 
-  // Bildirimleri getir
   useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const response = await axios.get('/api/notifications', {
-          params: {
-            type: selectedType !== 'all' ? selectedType : undefined,
-            page: 1,
-            limit: 10
-          }
-        });
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000); // Her 30 saniyede bir güncelle
+    return () => clearInterval(interval);
+  }, [currentUser]);
 
-        if (response.data.success) {
-          setNotifications(response.data.notifications);
-          setUnreadCount(response.data.unreadCount);
-        }
-      } catch (error) {
-        console.error('Bildirimler yüklenirken hata:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (user) {
-      fetchNotifications();
-    }
-  }, [user, selectedType]);
-
-  // Bildirimi okundu olarak işaretle
   const handleMarkAsRead = async (notificationId) => {
     try {
-      const response = await axios.put(`/api/notifications/${notificationId}/read`);
-      if (response.data.success) {
-        setNotifications(prev =>
-          prev.map(n =>
-            n._id === notificationId ? { ...n, isRead: true } : n
-          )
-        );
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      }
-    } catch (error) {
-      console.error('Bildirim güncellenirken hata:', error);
+      await axios.put(`/api/notifications/${notificationId}/read`, {}, {
+        headers: { Authorization: `Bearer ${currentUser.token}` }
+      });
+      setNotifications(notifications.map(notification =>
+        notification._id === notificationId
+          ? { ...notification, read: true }
+          : notification
+      ));
+    } catch (err) {
+      console.error('Bildirim güncelleme hatası:', err);
     }
   };
 
-  // Tüm bildirimleri okundu olarak işaretle
-  const handleMarkAllAsRead = async () => {
-    try {
-      const response = await axios.put('/api/notifications/read-all');
-      if (response.data.success) {
-        setNotifications(prev =>
-          prev.map(n => ({ ...n, isRead: true }))
-        );
-        setUnreadCount(0);
-      }
-    } catch (error) {
-      console.error('Bildirimler güncellenirken hata:', error);
-    }
-  };
+  const unreadCount = notifications.filter(n => !n.read).length;
 
-  // Bildirime tıklandığında
-  const handleNotificationClick = async (notification) => {
-    if (!notification.isRead) {
-      await handleMarkAsRead(notification._id);
-    }
-    if (notification.link) {
-      navigate(notification.link);
-    }
-    setShow(false);
-  };
-
-  // Bildirim tipine göre ikon
   const getNotificationIcon = (type) => {
     switch (type) {
-      case 'course':
-        return '📚';
-      case 'message':
-        return '💬';
-      case 'stream':
-        return '🎥';
+      case 'question':
+        return 'bi-question-circle';
+      case 'answer':
+        return 'bi-chat-square-text';
+      case 'mention':
+        return 'bi-at';
       case 'system':
-        return '⚙️';
+        return 'bi-bell';
       default:
-        return '📢';
+        return 'bi-bell';
+    }
+  };
+
+  const getNotificationColor = (type) => {
+    switch (type) {
+      case 'question':
+        return 'primary';
+      case 'answer':
+        return 'success';
+      case 'mention':
+        return 'warning';
+      case 'system':
+        return 'info';
+      default:
+        return 'secondary';
     }
   };
 
   return (
-    <Dropdown show={show} onToggle={(isOpen) => setShow(isOpen)}>
-      <Dropdown.Toggle variant="link" id="notification-dropdown" className="position-relative">
-        <i className="fas fa-bell"></i>
+    <Dropdown align="end" className="mx-2">
+      <Dropdown.Toggle 
+        variant="light" 
+        id="dropdown-notifications" 
+        className="position-relative border-0 bg-transparent text-dark fw-medium hover-lift"
+      >
+        <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" 
+             style={{width: 32, height: 32}}>
+          <i className="bi bi-bell text-primary"></i>
+        </div>
         {unreadCount > 0 && (
-          <Badge
-            bg="danger"
-            pill
+          <Badge 
+            bg="danger" 
+            pill 
             className="position-absolute top-0 start-100 translate-middle"
-            style={{ fontSize: '0.7rem' }}
+            style={{ fontSize: '0.7rem', padding: '0.25rem 0.4rem' }}
           >
             {unreadCount}
           </Badge>
         )}
       </Dropdown.Toggle>
 
-      <Dropdown.Menu
-        align="end"
-        style={{ width: '300px', maxHeight: '400px', overflowY: 'auto' }}
+      <Dropdown.Menu 
+        className="shadow-sm border-0 rounded-3 p-0" 
+        style={{ width: '320px', maxHeight: '400px' }}
       >
-        <div className="px-3 py-2 border-bottom">
-          <div className="d-flex justify-content-between align-items-center mb-2">
-            <h6 className="mb-0">Bildirimler</h6>
-            {unreadCount > 0 && (
-              <Button
-                variant="link"
-                size="sm"
-                className="text-decoration-none p-0"
-                onClick={handleMarkAllAsRead}
-              >
-                Tümünü okundu işaretle
-              </Button>
-            )}
-          </div>
-          <div className="btn-group btn-group-sm w-100">
-            <Button
-              variant={selectedType === 'all' ? 'primary' : 'outline-primary'}
-              size="sm"
-              onClick={() => setSelectedType('all')}
-            >
-              Tümü
-            </Button>
-            <Button
-              variant={selectedType === 'course' ? 'primary' : 'outline-primary'}
-              size="sm"
-              onClick={() => setSelectedType('course')}
-            >
-              Dersler
-            </Button>
-            <Button
-              variant={selectedType === 'message' ? 'primary' : 'outline-primary'}
-              size="sm"
-              onClick={() => setSelectedType('message')}
-            >
-              Mesajlar
-            </Button>
-            <Button
-              variant={selectedType === 'stream' ? 'primary' : 'outline-primary'}
-              size="sm"
-              onClick={() => setSelectedType('stream')}
-            >
-              Yayınlar
-            </Button>
-          </div>
+        <div className="d-flex justify-content-between align-items-center p-3 border-bottom">
+          <h6 className="mb-0 fw-bold">Bildirimler</h6>
+          {unreadCount > 0 && (
+            <Badge bg="primary" pill className="ms-2">
+              {unreadCount} yeni
+            </Badge>
+          )}
         </div>
 
-        {loading ? (
-          <div className="text-center p-3">
-            <Spinner animation="border" size="sm" />
-          </div>
-        ) : notifications.length === 0 ? (
-          <div className="text-center p-3 text-muted">
-            Bildirim bulunmuyor
-          </div>
-        ) : (
-          <ListGroup variant="flush">
-            {notifications.map(notification => (
-              <ListGroup.Item
+        <div className="notification-list" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+          {loading ? (
+            <div className="text-center p-4">
+              <Spinner animation="border" size="sm" className="text-primary" />
+              <span className="ms-2 text-muted">Yükleniyor...</span>
+            </div>
+          ) : error ? (
+            <div className="text-center p-4 text-danger">
+              <i className="bi bi-exclamation-circle me-2"></i>
+              {error}
+            </div>
+          ) : notifications.length === 0 ? (
+            <div className="text-center p-4 text-muted">
+              <i className="bi bi-bell-slash fs-4 d-block mb-2"></i>
+              Henüz bildiriminiz yok
+            </div>
+          ) : (
+            notifications.map(notification => (
+              <Dropdown.Item
                 key={notification._id}
-                action
-                className={`d-flex align-items-start p-2 ${
-                  !notification.isRead ? 'bg-light' : ''
-                }`}
-                onClick={() => handleNotificationClick(notification)}
+                className={`p-3 border-bottom hover-lift ${!notification.read ? 'bg-light' : ''}`}
+                onClick={() => !notification.read && handleMarkAsRead(notification._id)}
+                style={{ cursor: 'pointer' }}
               >
-                <div className="me-2" style={{ fontSize: '1.2rem' }}>
-                  {getNotificationIcon(notification.type)}
-                </div>
-                <div className="flex-grow-1">
-                  <div className="d-flex justify-content-between align-items-start">
-                    <h6 className="mb-1">{notification.title}</h6>
-                    <small className="text-muted">
-                      {formatDistanceToNow(new Date(notification.createdAt), {
-                        addSuffix: true,
-                        locale: tr
+                <div className="d-flex align-items-start">
+                  <div className={`bg-${getNotificationColor(notification.type)} bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3`}
+                       style={{width: 36, height: 36, minWidth: 36}}>
+                    <i className={`bi ${getNotificationIcon(notification.type)} text-${getNotificationColor(notification.type)}`}></i>
+                  </div>
+                  <div className="flex-grow-1">
+                    <p className="mb-1" style={{ fontSize: '0.9rem' }}>
+                      {notification.message}
+                    </p>
+                    <small className="text-muted d-flex align-items-center">
+                      <i className="bi bi-clock me-1"></i>
+                      {new Date(notification.createdAt).toLocaleString('tr-TR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
                       })}
                     </small>
                   </div>
-                  <p className="mb-0 small">{notification.content}</p>
+                  {!notification.read && (
+                    <div className="ms-2">
+                      <div className="bg-primary rounded-circle" style={{width: 8, height: 8}}></div>
+                    </div>
+                  )}
                 </div>
-              </ListGroup.Item>
-            ))}
-          </ListGroup>
+              </Dropdown.Item>
+            ))
+          )}
+        </div>
+
+        {notifications.length > 0 && (
+          <div className="p-2 border-top text-center">
+            <button 
+              className="btn btn-link text-decoration-none text-primary p-2 hover-lift"
+              onClick={() => window.location.reload()}
+            >
+              <i className="bi bi-arrow-clockwise me-1"></i>
+              Yenile
+            </button>
+          </div>
         )}
       </Dropdown.Menu>
+
+      <style jsx>{`
+        .hover-lift {
+          transition: transform 0.2s ease-in-out;
+        }
+        .hover-lift:hover {
+          transform: translateY(-2px);
+        }
+        .notification-list::-webkit-scrollbar {
+          width: 6px;
+        }
+        .notification-list::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 3px;
+        }
+        .notification-list::-webkit-scrollbar-thumb {
+          background: #c1c1c1;
+          border-radius: 3px;
+        }
+        .notification-list::-webkit-scrollbar-thumb:hover {
+          background: #a8a8a8;
+        }
+        @media (max-width: 576px) {
+          .dropdown-menu {
+            position: fixed !important;
+            top: 60px !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            border-top: 1px solid #dee2e6 !important;
+          }
+        }
+      `}</style>
     </Dropdown>
   );
 };
