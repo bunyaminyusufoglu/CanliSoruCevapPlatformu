@@ -3,26 +3,42 @@ const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
 const dotenv = require('dotenv');
+const cookieParser = require('cookie-parser');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
+const questionRoutes = require('./routes/questions');
+const courseRoutes = require('./routes/courses');
 
 dotenv.config();
 connectDB();
 
 const app = express();
-app.use(cors());
+
+// Middleware'ler
 app.use(express.json());
+app.use(cookieParser());
+
+// CORS ayarları
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  exposedHeaders: ['Authorization']
+}));
 
 // Rotalar
 app.use('/api/auth', authRoutes);
-app.use('/api/questions', require('./routes/questions'));
-app.use('/api/courses', require('./routes/courses'));
+app.use('/api/questions', questionRoutes);
+app.use('/api/courses', courseRoutes);
 
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: "http://localhost:3000",
-    methods: ["GET", "POST"]
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"]
   }
 });
 

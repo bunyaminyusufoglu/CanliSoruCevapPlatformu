@@ -13,17 +13,6 @@ export const useAuth = () => {
 };
 
 // Token yönetimi için yardımcı fonksiyonlar
-const getStoredToken = () => {
-  try {
-    const token = localStorage.getItem('token');
-    return token ? JSON.parse(token) : null;
-  } catch (error) {
-    console.error('Token parse error:', error);
-    localStorage.removeItem('token');
-    return null;
-  }
-};
-
 const getStoredUser = () => {
   try {
     const user = localStorage.getItem('user');
@@ -40,16 +29,14 @@ const api = axios.create({
   baseURL: API_ENDPOINTS.AUTH.BASE,
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  withCredentials: true // Cookie'leri gönder
 });
 
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
-    const token = getStoredToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    // Access token header'a otomatik ekleniyor
     return config;
   },
   (error) => {
@@ -59,14 +46,41 @@ api.interceptors.request.use(
 
 // Response interceptor
 api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (error.response?.status === 401) {
-      // Token geçersiz veya süresi dolmuş
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+  (response) => {
+    // Access token response header'dan alınıp saklanıyor
+    const newAccessToken = response.headers['authorization'];
+    if (newAccessToken) {
+      // Yeni access token'ı header'a ekle
+      api.defaults.headers.common['Authorization'] = newAccessToken;
     }
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Token yenileme denemesi yapılmamışsa ve 401 hatası alındıysa
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        // Token yenileme isteği gönder
+        const response = await api.post(API_ENDPOINTS.AUTH.REFRESH_TOKEN);
+        
+        // Yeni access token'ı header'a ekle
+        const newAccessToken = response.headers['authorization'];
+        api.defaults.headers.common['Authorization'] = newAccessToken;
+
+        // Orijinal isteği yeni token ile tekrarla
+        originalRequest.headers['Authorization'] = newAccessToken;
+        return api(originalRequest);
+      } catch (refreshError) {
+        // Token yenileme başarısız olursa çıkış yap
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      }
+    }
+
     return Promise.reject(error);
   }
 );
@@ -78,17 +92,15 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      const token = getStoredToken();
       const user = getStoredUser();
 
-      if (token && user) {
+      if (user) {
         try {
           // Token'ın geçerliliğini kontrol et
           const response = await api.get(API_ENDPOINTS.AUTH.PROFILE);
           setCurrentUser(response.data.user);
         } catch (err) {
           console.error('Token validation error:', err);
-          localStorage.removeItem('token');
           localStorage.removeItem('user');
           setCurrentUser(null);
         }
@@ -101,22 +113,38 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
+      console.log('Login attempt:', { email });
       setError(null);
+      
       const response = await api.post(API_ENDPOINTS.AUTH.LOGIN, {
         email,
         password
       });
+      console.log('Login response:', response.data);
 
-      const { token, user } = response.data;
+      const { user } = response.data;
+      console.log('User data received:', user);
       
-      // Token ve kullanıcı bilgilerini kaydet
-      localStorage.setItem('token', JSON.stringify(token));
+      // Kullanıcı bilgilerini kaydet
       localStorage.setItem('user', JSON.stringify(user));
+      console.log('User data stored in localStorage');
+      
+      // Access token header'dan alınıp saklanıyor
+      const accessToken = response.headers['authorization'];
+      console.log('Access token received:', accessToken ? 'Yes' : 'No');
+      
+      if (accessToken) {
+        api.defaults.headers.common['Authorization'] = accessToken;
+        console.log('Access token set in axios headers');
+      }
       
       setCurrentUser(user);
+      console.log('Current user set in state');
+      
       return { success: true };
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Giriş yapılırken bir hata oluştu';
+      console.error('Login error:', err.response?.data || err.message);
+      const errorMessage = err.response?.data?.error || 'Giriş yapılırken bir hata oluştu';
       setError(errorMessage);
       return { success: false, error: errorMessage };
     }
@@ -124,19 +152,35 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
+      console.log('Register attempt:', userData);
       setError(null);
+      
       const response = await api.post(API_ENDPOINTS.AUTH.REGISTER, userData);
+      console.log('Register response:', response.data);
       
-      const { token, user } = response.data;
+      const { user } = response.data;
+      console.log('User data received:', user);
       
-      // Token ve kullanıcı bilgilerini kaydet
-      localStorage.setItem('token', JSON.stringify(token));
+      // Kullanıcı bilgilerini kaydet
       localStorage.setItem('user', JSON.stringify(user));
+      console.log('User data stored in localStorage');
+      
+      // Access token header'dan alınıp saklanıyor
+      const accessToken = response.headers['authorization'];
+      console.log('Access token received:', accessToken ? 'Yes' : 'No');
+      
+      if (accessToken) {
+        api.defaults.headers.common['Authorization'] = accessToken;
+        console.log('Access token set in axios headers');
+      }
       
       setCurrentUser(user);
+      console.log('Current user set in state');
+      
       return { success: true };
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Kayıt olurken bir hata oluştu';
+      console.error('Register error:', err.response?.data || err.message);
+      const errorMessage = err.response?.data?.error || 'Kayıt olurken bir hata oluştu';
       setError(errorMessage);
       return { success: false, error: errorMessage };
     }
@@ -148,8 +192,8 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
-      localStorage.removeItem('token');
       localStorage.removeItem('user');
+      delete api.defaults.headers.common['Authorization'];
       setCurrentUser(null);
     }
   };
@@ -165,7 +209,7 @@ export const AuthProvider = ({ children }) => {
       
       return { success: true };
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Profil güncellenirken bir hata oluştu';
+      const errorMessage = err.response?.data?.error || 'Profil güncellenirken bir hata oluştu';
       setError(errorMessage);
       return { success: false, error: errorMessage };
     }

@@ -3,8 +3,11 @@ const API_BASE_URL = 'http://localhost:5000/api';
 const API_ENDPOINTS = {
   // Auth endpoints
   AUTH: {
+    BASE: `${API_BASE_URL}/auth`,
     LOGIN: `${API_BASE_URL}/auth/login`,
     REGISTER: `${API_BASE_URL}/auth/register`,
+    LOGOUT: `${API_BASE_URL}/auth/logout`,
+    REFRESH_TOKEN: `${API_BASE_URL}/auth/refresh-token`,
     PROFILE: `${API_BASE_URL}/auth/profile`,
     ALL_USERS: `${API_BASE_URL}/auth/all`,
     UPDATE_PROFILE: `${API_BASE_URL}/auth/profile`,

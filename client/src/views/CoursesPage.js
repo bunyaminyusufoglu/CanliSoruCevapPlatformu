@@ -14,9 +14,8 @@ const CoursesPage = () => {
   const fetchCourses = async () => {
     try {
       const response = await axios.get('/api/courses');
-      if (response.data.success) {
-        setCourses(response.data.courses);
-      }
+      setCourses(response.data.courses);
+      setError('');
     } catch (error) {
       setError('Dersler yüklenirken bir hata oluştu');
       console.error('Dersler yüklenirken hata:', error);
@@ -29,8 +28,8 @@ const CoursesPage = () => {
     fetchCourses();
   }, []);
 
-  const handleCourseAdded = () => {
-    fetchCourses();
+  const handleCourseAdded = async () => {
+    await fetchCourses();
   };
 
   const handleCourseUpdated = () => {
@@ -90,7 +89,7 @@ const CoursesPage = () => {
           </Alert>
         )}
 
-        {user?.isAdmin && (
+        {user?.isAdmin || user?.userType === 'teacher' ? (
           <Row className="mb-5">
             <Col lg={8} className="mx-auto">
               <div className="bg-white p-5 rounded-4 shadow-lg border-0 animate__animated animate__fadeIn">
@@ -102,7 +101,7 @@ const CoursesPage = () => {
               </div>
             </Col>
           </Row>
-        )}
+        ) : null}
 
         <Row className="g-4">
           {courses.length === 0 ? (

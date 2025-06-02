@@ -1,190 +1,170 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-const User = require('../models/User');
 const router = express.Router();
-const auth = require('../middleware/auth');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+const { auth, generateTokens } = require('../middleware/auth');
 
+// Kayıt ol
 router.post('/register', async (req, res) => {
-  const { ad, soyad, username, email, password, userType } = req.body;
-  try { 
-    // Email veya kullanıcı adı kontrolü
-    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+  try {
+    const { username, email, password } = req.body;
+
+    // Kullanıcı adı veya email kontrolü
+    const existingUser = await User.findOne({ 
+      $or: [{ email }, { username }] 
+    });
+
     if (existingUser) {
-      return res.status(400).json({ error: 'Bu email veya kullanıcı adı zaten kullanılıyor.' });
+      return res.status(400).json({ 
+        message: 'Bu email adresi veya kullanıcı adı zaten kullanılıyor' 
+      });
     }
-    const user = new User({ ad, soyad, username, email, password, userType });
+
+    // Yeni kullanıcı oluştur
+    const user = new User({
+      username,
+      email,
+      password
+    });
+
     await user.save();
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    const userObj = user.toObject();
-    delete userObj.password;
-    res.status(201).json({ token, user: userObj });
-  } catch (err) {
-    console.error('Register error:', err);
-    res.status(400).json({ error: 'Kullanıcı oluşturulamadı.' });
-  }
-});
 
-// Tüm kullanıcıları getir (hassas bilgiler hariç)
-router.get('/all', async (req, res) => {
-  try {
-    const users = await User.find()
-      .select('-password -resetPasswordToken -resetPasswordExpires') // Hassas bilgileri hariç tut
-      .sort({ createdAt: -1 }); // En yeni kullanıcılar önce
+    // Token oluştur
+    const tokens = generateTokens(user);
 
-    // Kullanıcı bilgilerini düzenle
-    const formattedUsers = users.map(user => ({
-      id: user._id,
-      username: user.username,
-      email: user.email,
-      ad: user.ad,
-      soyad: user.soyad,
-      userType: user.userType,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-      // İstatistikler
-      questionCount: user.questionCount || 0,
-      answerCount: user.answerCount || 0,
-      points: user.points || 0,
-      // Profil bilgileri
-      profileImage: user.profileImage,
-      bio: user.bio,
-      // Eğitmen bilgileri
-      expertise: user.expertise || [],
-      rating: user.rating || 0,
-      // Öğrenci bilgileri
-      enrolledCourses: user.enrolledCourses || [],
-      completedCourses: user.completedCourses || []
-    }));
+    // Refresh token'ı cookie'ye kaydet
+    res.cookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 gün
+    });
 
-    res.json(formattedUsers);
-  } catch (err) {
-    console.error('Users fetch error:', err);
-    res.status(500).json({ error: 'Kullanıcılar yüklenirken bir hata oluştu.' });
-  }
-});
+    // Access token'ı header'a ekle
+    res.setHeader('Authorization', `Bearer ${tokens.accessToken}`);
 
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).json({ error: 'Geçersiz şifre.' });
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    const userObj = user.toObject();
-    delete userObj.password;
-    res.json({ token, user: userObj });
-  } catch (err) {
-    res.status(500).json({ error: 'Sunucu hatası.' });
-  }
-});
-
-router.get('/user/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const user = await User.findById(id);
-    res.json(user);
-  } catch (err) {
-    res.status(500).json({ error: 'Kullanıcı bulunamadı.' });
-  }
-});
-
-router.put('/user/:id', async (req, res) => {
-  const { id } = req.params;
-  const { ad, soyad, username, email, password } = req.body;
-  try {
-    const user = await User.findByIdAndUpdate(id, { ad, soyad, username, email, password }, { new: true });
-    res.json(user);
-  } catch (err) {
-    res.status(500).json({ error: 'Kullanıcı güncellenemedi.' });
-  }
-});
-
-router.delete('/user/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    await User.findByIdAndDelete(id);
-    res.json({ message: 'Kullanıcı silindi.' });
-  } catch (err) {
-    res.status(500).json({ error: 'Kullanıcı silinemedi.' });
-  }
-});
-
-router.get('/profile', auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select('-password');
-    if (!user) return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
-    res.json(user);
-  } catch (err) {
-    res.status(500).json({ error: 'Sunucu hatası.' });
-  }
-});
-
-router.put('/profile', auth, async (req, res) => {
-  try {
-    const { ad, soyad, username, bio, unvan, avatar } = req.body;
-    
-    if (username) {
-      const existingUser = await User.findOne({ username, _id: { $ne: req.user.id } });
-      if (existingUser) {
-        return res.status(400).json({ error: 'Bu kullanıcı adı zaten kullanılıyor.' });
+    res.status(201).json({
+      message: 'Kayıt başarılı',
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        userType: user.userType
       }
-    }
-
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      { 
-        ad, 
-        soyad, 
-        username, 
-        bio, 
-        unvan, 
-        avatar,
-        lastSeen: new Date()
-      },
-      { new: true }
-    ).select('-password');
-
-    res.json(user);
-  } catch (err) {
-    res.status(500).json({ error: 'Profil güncellenemedi.' });
+    });
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({ message: 'Kayıt işlemi başarısız' });
   }
 });
 
-router.put('/profile/password', auth, async (req, res) => {
+// Giriş yap
+router.post('/login', async (req, res) => {
   try {
-    const { currentPassword, newPassword } = req.body;
-    const user = await User.findById(req.user.id);
+    const { email, password } = req.body;
 
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Mevcut şifre yanlış.' });
+    // Kullanıcıyı bul
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ message: 'Geçersiz email veya şifre' });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
+    // Şifreyi kontrol et
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Geçersiz email veya şifre' });
+    }
+
+    // Son giriş zamanını güncelle
+    user.lastLogin = new Date();
     await user.save();
 
-    res.json({ message: 'Şifre başarıyla güncellendi.' });
-  } catch (err) {
-    res.status(500).json({ error: 'Şifre güncellenemedi.' });
+    // Token oluştur
+    const tokens = generateTokens(user);
+
+    // Refresh token'ı cookie'ye kaydet
+    res.cookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 gün
+    });
+
+    // Access token'ı header'a ekle
+    res.setHeader('Authorization', `Bearer ${tokens.accessToken}`);
+
+    res.json({
+      message: 'Giriş başarılı',
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        userType: user.userType
+      }
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Giriş işlemi başarısız' });
   }
 });
 
-// Mevcut kullanıcı bilgilerini getir
+// Token yenile
+router.post('/refresh-token', async (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+    
+    if (!refreshToken) {
+      return res.status(401).json({ message: 'Refresh token bulunamadı' });
+    }
+
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    const user = await User.findById(decoded.userId);
+
+    if (!user) {
+      return res.status(401).json({ message: 'Geçersiz refresh token' });
+    }
+
+    const tokens = generateTokens(user);
+
+    // Yeni refresh token'ı cookie'ye kaydet
+    res.cookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 gün
+    });
+
+    // Yeni access token'ı header'a ekle
+    res.setHeader('Authorization', `Bearer ${tokens.accessToken}`);
+
+    res.json({ message: 'Token yenilendi' });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    res.status(401).json({ message: 'Token yenileme başarısız' });
+  }
+});
+
+// Çıkış yap
+router.post('/logout', auth, async (req, res) => {
+  try {
+    // Refresh token cookie'sini temizle
+    res.clearCookie('refreshToken');
+    res.json({ message: 'Çıkış başarılı' });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ message: 'Çıkış işlemi başarısız' });
+  }
+});
+
+// Kullanıcı bilgilerini getir
 router.get('/me', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
-    if (!user) {
-      return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
-    }
+    const user = await User.findById(req.user.userId).select('-password');
     res.json(user);
-  } catch (err) {
-    res.status(500).json({ error: 'Sunucu hatası.' });
+  } catch (error) {
+    console.error('Get user error:', error);
+    res.status(500).json({ message: 'Kullanıcı bilgileri alınamadı' });
   }
 });
 
-module.exports = router;
+module.exports = router; 

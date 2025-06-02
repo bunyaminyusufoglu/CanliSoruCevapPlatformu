@@ -1,79 +1,87 @@
 const mongoose = require('mongoose');
 
 const answerSchema = new mongoose.Schema({
-  user: {
+  content: {
+    type: String,
+    required: [true, 'Cevap içeriği zorunludur'],
+    trim: true
+  },
+  author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  content: {
-    type: String,
-    required: true
-  },
-  isHelpful: {
-    type: Boolean,
-    default: false
+  createdAt: {
+    type: Date,
+    default: Date.now
   },
   helpfulCount: {
     type: Number,
     default: 0
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
+  helpfulBy: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }]
 });
 
 const questionSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: true,
-    trim: true
+    required: [true, 'Soru başlığı zorunludur'],
+    trim: true,
+    minlength: [10, 'Başlık en az 10 karakter olmalıdır'],
+    maxlength: [200, 'Başlık en fazla 200 karakter olabilir']
   },
   content: {
     type: String,
-    required: true
+    required: [true, 'Soru içeriği zorunludur'],
+    trim: true,
+    minlength: [20, 'İçerik en az 20 karakter olmalıdır']
   },
   category: {
     type: String,
-    required: true,
-    enum: ['matematik', 'fizik', 'kimya', 'biyoloji', 'türkçe', 'tarih', 'coğrafya', 'diğer']
+    required: [true, 'Kategori seçimi zorunludur'],
+    enum: ['frontend', 'backend', 'database', 'devops', 'mobile']
   },
-  user: {
+  tags: [{
+    type: String,
+    trim: true
+  }],
+  author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
   answers: [answerSchema],
-  tags: [{
-    type: String,
-    trim: true
-  }],
   viewCount: {
     type: Number,
     default: 0
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
+  answerCount: {
+    type: Number,
+    default: 0
   },
-  updatedAt: {
-    type: Date,
-    default: Date.now
+  isSolved: {
+    type: Boolean,
+    default: false
+  },
+  solvedAt: {
+    type: Date
   }
+}, {
+  timestamps: true
 });
 
-// Arama için text index oluştur
-questionSchema.index({ 
-  title: 'text', 
-  content: 'text',
-  tags: 'text'
-});
+// Metin araması için index
+questionSchema.index({ title: 'text', content: 'text' });
 
-// Update the updatedAt timestamp before saving
+// Cevap sayısını güncelle
 questionSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
+  this.answerCount = this.answers.length;
   next();
 });
 
-module.exports = mongoose.model('Question', questionSchema); 
+const Question = mongoose.model('Question', questionSchema);
+
+module.exports = Question; 

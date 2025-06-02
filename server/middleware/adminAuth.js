@@ -1,18 +1,20 @@
-const jwt = require('jsonwebtoken');
+const { auth } = require('./auth');
 
-module.exports = (req, res, next) => {
+const adminAuth = async (req, res, next) => {
   try {
-    const token = req.header('Authorization').replace('Bearer ', '');
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    // Check if user has admin role
-    if (!decoded.isAdmin) {
-      return res.status(403).json({ error: 'Bu işlem için yetkiniz bulunmamaktadır.' });
-    }
-    
-    req.user = decoded;
-    next();
-  } catch (err) {
-    res.status(401).json({ error: 'Lütfen giriş yapın.' });
+    // Önce normal auth middleware'ini çalıştır
+    await auth(req, res, () => {
+      // Kullanıcının admin olup olmadığını kontrol et
+      if (req.user && req.user.userType === 'admin') {
+        next();
+      } else {
+        res.status(403).json({ message: 'Bu işlem için admin yetkisi gerekiyor' });
+      }
+    });
+  } catch (error) {
+    console.error('Admin auth middleware error:', error);
+    res.status(401).json({ message: 'Yetkilendirme başarısız' });
   }
-}; 
+};
+
+module.exports = adminAuth; 

@@ -33,7 +33,7 @@ const Courses = () => {
           category: selectedCategory !== 'all' ? selectedCategory : undefined
         }
       });
-      setCourses(response.data);
+      setCourses(response.data.courses);
       setError('');
     } catch (err) {
       setError('Dersler yüklenirken bir hata oluştu.');

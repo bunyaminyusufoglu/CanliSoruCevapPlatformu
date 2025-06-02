@@ -1,13 +1,22 @@
 const mongoose = require('mongoose');
 
-const commentSchema = new mongoose.Schema({
-  user: {
+const reviewSchema = new mongoose.Schema({
+  rating: {
+    type: Number,
+    required: [true, 'Puan zorunludur'],
+    min: [1, 'Puan en az 1 olmalıdır'],
+    max: [5, 'Puan en fazla 5 olabilir']
+  },
+  comment: {
+    type: String,
+    required: [true, 'Yorum zorunludur'],
+    trim: true,
+    minlength: [10, 'Yorum en az 10 karakter olmalıdır'],
+    maxlength: [500, 'Yorum en fazla 500 karakter olabilir']
+  },
+  author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
-  },
-  content: {
-    type: String,
     required: true
   },
   createdAt: {
@@ -19,62 +28,75 @@ const commentSchema = new mongoose.Schema({
 const courseSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: true,
-    trim: true
+    required: [true, 'Kurs başlığı zorunludur'],
+    trim: true,
+    minlength: [10, 'Başlık en az 10 karakter olmalıdır'],
+    maxlength: [200, 'Başlık en fazla 200 karakter olabilir']
   },
   description: {
     type: String,
-    required: true
+    required: [true, 'Kurs açıklaması zorunludur'],
+    trim: true,
+    minlength: [50, 'Açıklama en az 50 karakter olmalıdır']
   },
   category: {
     type: String,
-    required: true,
-    enum: ['matematik', 'fizik', 'kimya', 'biyoloji', 'turkce', 'ingilizce']
+    required: [true, 'Kategori seçimi zorunludur'],
+    enum: ['frontend', 'backend', 'database', 'devops', 'mobile']
+  },
+  price: {
+    type: Number,
+    required: [true, 'Fiyat zorunludur'],
+    min: [0, 'Fiyat 0\'dan küçük olamaz']
+  },
+  duration: {
+    type: Number,
+    required: [true, 'Süre zorunludur'],
+    min: [1, 'Süre en az 1 saat olmalıdır']
+  },
+  level: {
+    type: String,
+    required: [true, 'Seviye seçimi zorunludur'],
+    enum: ['beginner', 'intermediate', 'advanced']
   },
   instructor: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  image: {
-    type: String,
-    default: null
-  },
-  duration: {
-    type: String,
-    required: true
-  },
-  rating: {
-    type: Number,
-    default: 0,
-    min: 0,
-    max: 5
-  },
-  enrolledStudents: [{
+  students: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
-  videoUrl: {
-    type: String
+  reviews: [reviewSchema],
+  enrollmentCount: {
+    type: Number,
+    default: 0
   },
-  pdfUrl: {
-    type: String
+  rating: {
+    type: Number,
+    default: 0
   },
-  comments: [commentSchema],
-  createdAt: {
-    type: Date,
-    default: Date.now
+  isPublished: {
+    type: Boolean,
+    default: false
   },
-  updatedAt: {
-    type: Date,
-    default: Date.now
+  publishedAt: {
+    type: Date
   }
+}, {
+  timestamps: true
 });
 
-// Update the updatedAt timestamp before saving
+// Metin araması için index
+courseSchema.index({ title: 'text', description: 'text' });
+
+// Öğrenci sayısını güncelle
 courseSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
+  this.enrollmentCount = this.students.length;
   next();
 });
 
-module.exports = mongoose.model('Course', courseSchema); 
+const Course = mongoose.model('Course', courseSchema);
+
+module.exports = Course; 

@@ -6,12 +6,23 @@ const AddCourseForm = ({ onCourseAdded }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    category: '',
+    duration: '',
     videoFile: null,
     pdfFile: null
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const categories = [
+    { value: 'matematik', label: 'Matematik' },
+    { value: 'fizik', label: 'Fizik' },
+    { value: 'kimya', label: 'Kimya' },
+    { value: 'biyoloji', label: 'Biyoloji' },
+    { value: 'turkce', label: 'Türkçe' },
+    { value: 'ingilizce', label: 'İngilizce' }
+  ];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -31,6 +42,7 @@ const AddCourseForm = ({ onCourseAdded }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
     setError('');
     setSuccess('');
     setLoading(true);
@@ -39,6 +51,8 @@ const AddCourseForm = ({ onCourseAdded }) => {
       const formDataToSend = new FormData();
       formDataToSend.append('title', formData.title);
       formDataToSend.append('description', formData.description);
+      formDataToSend.append('category', formData.category);
+      formDataToSend.append('duration', formData.duration);
       if (formData.videoFile) {
         formDataToSend.append('video', formData.videoFile);
       }
@@ -52,18 +66,24 @@ const AddCourseForm = ({ onCourseAdded }) => {
         }
       });
 
-      if (response.data.success) {
+      if (response.data) {
         setSuccess('Ders başarıyla eklendi!');
         setFormData({
           title: '',
           description: '',
+          category: '',
+          duration: '',
           videoFile: null,
           pdfFile: null
         });
-        onCourseAdded && onCourseAdded();
+        e.target.reset();
+        if (onCourseAdded) {
+          await onCourseAdded();
+        }
       }
     } catch (error) {
-      setError(error.response?.data?.message || 'Ders eklenirken bir hata oluştu');
+      console.error('Ders ekleme hatası:', error);
+      setError(error.response?.data?.error || 'Ders eklenirken bir hata oluştu');
     } finally {
       setLoading(false);
     }
@@ -82,6 +102,38 @@ const AddCourseForm = ({ onCourseAdded }) => {
           value={formData.title}
           onChange={handleInputChange}
           required
+          className="rounded-3 shadow-sm"
+        />
+      </Form.Group>
+
+      <Form.Group className="mb-3">
+        <Form.Label>Kategori</Form.Label>
+        <Form.Select
+          name="category"
+          value={formData.category}
+          onChange={handleInputChange}
+          required
+          className="rounded-3 shadow-sm"
+        >
+          <option value="">Kategori Seçin</option>
+          {categories.map(category => (
+            <option key={category.value} value={category.value}>
+              {category.label}
+            </option>
+          ))}
+        </Form.Select>
+      </Form.Group>
+
+      <Form.Group className="mb-3">
+        <Form.Label>Süre (Örn: 2 saat, 45 dakika)</Form.Label>
+        <Form.Control
+          type="text"
+          name="duration"
+          value={formData.duration}
+          onChange={handleInputChange}
+          required
+          placeholder="Örn: 2 saat"
+          className="rounded-3 shadow-sm"
         />
       </Form.Group>
 
@@ -94,6 +146,7 @@ const AddCourseForm = ({ onCourseAdded }) => {
           value={formData.description}
           onChange={handleInputChange}
           required
+          className="rounded-3 shadow-sm"
         />
       </Form.Group>
 
@@ -104,7 +157,11 @@ const AddCourseForm = ({ onCourseAdded }) => {
           name="videoFile"
           onChange={handleFileChange}
           accept="video/*"
+          className="rounded-3 shadow-sm"
         />
+        <Form.Text className="text-muted">
+          Maksimum dosya boyutu: 100MB
+        </Form.Text>
       </Form.Group>
 
       <Form.Group className="mb-3">
@@ -114,11 +171,30 @@ const AddCourseForm = ({ onCourseAdded }) => {
           name="pdfFile"
           onChange={handleFileChange}
           accept=".pdf"
+          className="rounded-3 shadow-sm"
         />
+        <Form.Text className="text-muted">
+          Maksimum dosya boyutu: 100MB
+        </Form.Text>
       </Form.Group>
 
-      <Button variant="primary" type="submit" disabled={loading}>
-        {loading ? 'Ders Ekleniyor...' : 'Ders Ekle'}
+      <Button 
+        variant="primary" 
+        type="submit" 
+        disabled={loading}
+        className="rounded-pill px-4 py-2 shadow-sm"
+      >
+        {loading ? (
+          <>
+            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Ders Ekleniyor...
+          </>
+        ) : (
+          <>
+            <i className="bi bi-plus-circle me-2"></i>
+            Ders Ekle
+          </>
+        )}
       </Button>
     </Form>
   );

@@ -1,166 +1,168 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const { auth } = require('../middleware/auth');
 const Course = require('../models/Course');
-const auth = require('../middleware/auth');
-const adminAuth = require('../middleware/adminAuth');
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = file.mimetype.startsWith('video/') 
-      ? 'uploads/videos' 
-      : 'uploads/pdfs';
-    
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({
-  storage,
-  limits: {
-    fileSize: 100 * 1024 * 1024 // 100MB limit
-  },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('video/') || file.mimetype === 'application/pdf') {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type. Only videos and PDFs are allowed.'));
-    }
-  }
-});
-
-// Tüm dersleri getir
+// Tüm kursları getir
 router.get('/', async (req, res) => {
   try {
-    const courses = await Course.find()
-      .populate('instructor', 'username ad soyad')
-      .sort({ createdAt: -1 });
-    res.json(courses);
-  } catch (err) {
-    console.error('Courses fetch error:', err);
-    res.status(500).json({ error: 'Dersler yüklenirken bir hata oluştu.' });
+    const { search, category, instructor, sort = 'newest', page = 1, limit = 10 } = req.query;
+    
+    // Arama filtresi
+    const filter = {};
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+    if (category) filter.category = category;
+    if (instructor) filter['instructor.username'] = instructor;
+
+    // Sıralama seçenekleri
+    const sortOptions = {
+      newest: { createdAt: -1 },
+      oldest: { createdAt: 1 },
+      mostEnrolled: { enrollmentCount: -1 },
+      highestRated: { rating: -1 }
+    };
+
+    const courses = await Course.find(filter)
+      .sort(sortOptions[sort] || sortOptions.newest)
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
+      .populate('instructor', 'username profileImage')
+      .populate('students', 'username profileImage');
+
+    const total = await Course.countDocuments(filter);
+
+    res.json({
+      courses,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      totalCourses: total
+    });
+  } catch (error) {
+    console.error('Get courses error:', error);
+    res.status(500).json({ message: 'Kurslar yüklenirken bir hata oluştu' });
   }
 });
 
-// Yeni ders oluştur (sadece eğitmenler)
+// Yeni kurs oluştur
 router.post('/', auth, async (req, res) => {
   try {
-    // Kullanıcının eğitmen olup olmadığını kontrol et
-    if (req.user.userType !== 'teacher') {
-      return res.status(403).json({ error: 'Bu işlem için eğitmen yetkisi gerekiyor.' });
-    }
+    const { title, description, category, price, duration, level } = req.body;
 
     const course = new Course({
-      ...req.body,
-      instructor: req.user.id
+      title,
+      description,
+      category,
+      price,
+      duration,
+      level,
+      instructor: req.user.userId
     });
 
     await course.save();
+    await course.populate('instructor', 'username profileImage');
+
     res.status(201).json(course);
-  } catch (err) {
-    console.error('Course creation error:', err);
-    res.status(400).json({ error: 'Ders oluşturulamadı.' });
+  } catch (error) {
+    console.error('Create course error:', error);
+    res.status(500).json({ message: 'Kurs oluşturulurken bir hata oluştu' });
   }
 });
 
-// Ders detaylarını getir
+// Kurs detaylarını getir
 router.get('/:id', async (req, res) => {
   try {
     const course = await Course.findById(req.params.id)
-      .populate('instructor', 'username ad soyad')
-      .populate('enrolledStudents', 'username ad soyad');
-    
+      .populate('instructor', 'username profileImage bio')
+      .populate('students', 'username profileImage')
+      .populate('reviews.author', 'username profileImage');
+
     if (!course) {
-      return res.status(404).json({ error: 'Ders bulunamadı.' });
+      return res.status(404).json({ message: 'Kurs bulunamadı' });
     }
-    
+
     res.json(course);
-  } catch (err) {
-    console.error('Course fetch error:', err);
-    res.status(500).json({ error: 'Ders yüklenirken bir hata oluştu.' });
+  } catch (error) {
+    console.error('Get course error:', error);
+    res.status(500).json({ message: 'Kurs yüklenirken bir hata oluştu' });
   }
 });
 
-// Derse katıl
+// Kursa kaydol
 router.post('/:id/enroll', auth, async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
-    
+
     if (!course) {
-      return res.status(404).json({ error: 'Ders bulunamadı.' });
+      return res.status(404).json({ message: 'Kurs bulunamadı' });
     }
 
-    // Kullanıcı zaten derse kayıtlı mı kontrol et
-    if (course.enrolledStudents.includes(req.user.id)) {
-      return res.status(400).json({ error: 'Bu derse zaten kayıtlısınız.' });
+    // Kullanıcı zaten kayıtlı mı kontrol et
+    if (course.students.includes(req.user.userId)) {
+      return res.status(400).json({ message: 'Bu kursa zaten kayıtlısınız' });
     }
 
-    course.enrolledStudents.push(req.user.id);
+    course.students.push(req.user.userId);
+    course.enrollmentCount += 1;
     await course.save();
 
-    res.json({ message: 'Derse başarıyla katıldınız.' });
-  } catch (err) {
-    console.error('Course enrollment error:', err);
-    res.status(500).json({ error: 'Derse katılırken bir hata oluştu.' });
+    await course.populate('instructor', 'username profileImage');
+    await course.populate('students', 'username profileImage');
+
+    res.json(course);
+  } catch (error) {
+    console.error('Enroll course error:', error);
+    res.status(500).json({ message: 'Kursa kaydolurken bir hata oluştu' });
   }
 });
 
-// Dersi güncelle (sadece eğitmen)
-router.put('/:id', auth, async (req, res) => {
+// Kursa yorum ekle
+router.post('/:id/reviews', auth, async (req, res) => {
   try {
+    const { rating, comment } = req.body;
     const course = await Course.findById(req.params.id);
-    
+
     if (!course) {
-      return res.status(404).json({ error: 'Ders bulunamadı.' });
+      return res.status(404).json({ message: 'Kurs bulunamadı' });
     }
 
-    // Kullanıcının dersin eğitmeni olup olmadığını kontrol et
-    if (course.instructor.toString() !== req.user.id) {
-      return res.status(403).json({ error: 'Bu dersi güncelleme yetkiniz yok.' });
+    // Kullanıcı kursa kayıtlı mı kontrol et
+    if (!course.students.includes(req.user.userId)) {
+      return res.status(403).json({ message: 'Bu kursa yorum yapabilmek için kayıtlı olmalısınız' });
     }
 
-    const updatedCourse = await Course.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
+    // Kullanıcı daha önce yorum yapmış mı kontrol et
+    const existingReview = course.reviews.find(
+      review => review.author.toString() === req.user.userId
     );
 
-    res.json(updatedCourse);
-  } catch (err) {
-    console.error('Course update error:', err);
-    res.status(500).json({ error: 'Ders güncellenirken bir hata oluştu.' });
-  }
-});
-
-// Dersi sil (sadece eğitmen)
-router.delete('/:id', auth, async (req, res) => {
-  try {
-    const course = await Course.findById(req.params.id);
-    
-    if (!course) {
-      return res.status(404).json({ error: 'Ders bulunamadı.' });
+    if (existingReview) {
+      return res.status(400).json({ message: 'Bu kursa zaten yorum yapmışsınız' });
     }
 
-    // Kullanıcının dersin eğitmeni olup olmadığını kontrol et
-    if (course.instructor.toString() !== req.user.id) {
-      return res.status(403).json({ error: 'Bu dersi silme yetkiniz yok.' });
-    }
+    const review = {
+      rating,
+      comment,
+      author: req.user.userId
+    };
 
-    await course.remove();
-    res.json({ message: 'Ders başarıyla silindi.' });
-  } catch (err) {
-    console.error('Course deletion error:', err);
-    res.status(500).json({ error: 'Ders silinirken bir hata oluştu.' });
+    course.reviews.push(review);
+
+    // Kurs puanını güncelle
+    const totalRating = course.reviews.reduce((sum, review) => sum + review.rating, 0);
+    course.rating = totalRating / course.reviews.length;
+
+    await course.save();
+    await course.populate('reviews.author', 'username profileImage');
+
+    res.status(201).json(course);
+  } catch (error) {
+    console.error('Add review error:', error);
+    res.status(500).json({ message: 'Yorum eklenirken bir hata oluştu' });
   }
 });
 
