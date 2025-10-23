@@ -7,12 +7,20 @@ const auth = require('../middleware/auth');
 
 router.post('/register', async (req, res) => {
   const { ad, soyad, username, email, password } = req.body;
-  try { 
+  try {
+    if (!ad || !soyad || !username || !email || !password) {
+      return res.status(400).json({ error: 'Tüm alanlar zorunludur.' });
+    }
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Bu e-posta veya kullanıcı adı zaten kullanılıyor.' });
+    }
     const user = new User({ ad, soyad, username, email, password });
     await user.save();
     res.status(201).json({ message: 'Kayıt başarılı!' });
   } catch (err) {
-    res.status(400).json({ error: 'Kullanıcı oluşturulamadı.' });
+    const msg = err?.message || 'Kullanıcı oluşturulamadı.';
+    res.status(400).json({ error: msg });
   }
 });
 

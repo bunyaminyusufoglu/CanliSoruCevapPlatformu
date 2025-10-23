@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import CategorySelect from './CategorySelect';
 
-const socket = io('http://localhost:5000');
+const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || '/';
+const socket = io(SOCKET_URL);
 
 const LiveChat = () => {
   const [message, setMessage] = useState('');

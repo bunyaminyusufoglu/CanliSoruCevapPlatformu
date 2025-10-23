@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
   avatar: { type: String, default: '' },
   bio: { type: String, default: '' },
   unvan: { type: String, default: '' },
+  isAdmin: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   lastSeen: { type: Date, default: Date.now },
   isOnline: { type: Boolean, default: false }

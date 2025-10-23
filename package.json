@@ -1,6 +1,13 @@
 {
   "dependencies": {
+    "date-fns": "^4.1.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1"
+  },
+  "scripts": {
+    "start": "node server/server.js",
+    "server": "npm --prefix server run dev",
+    "client": "npm --prefix client start",
+    "build": "npm --prefix client run build"
   }
 }

@@ -1,25 +1,49 @@
 const express = require('express');
 const cors = require('cors');
 const http = require('http');
+const path = require('path');
 const { Server } = require('socket.io');
+const helmet = require('helmet');
 const dotenv = require('dotenv');
+const fs = require('fs');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
+const coursesRoutes = require('./routes/courses');
+const streamsRoutes = require('./routes/streams');
+const notificationsRoutes = require('./routes/notifications');
+const Notification = require('./models/Notification');
 
-dotenv.config();
+// Load env from server/.env if exists, otherwise from project root .env
+const serverEnvPath = path.join(__dirname, '.env');
+const rootEnvPath = path.join(__dirname, '..', '.env');
+if (fs.existsSync(serverEnvPath)) {
+  dotenv.config({ path: serverEnvPath });
+} else if (fs.existsSync(rootEnvPath)) {
+  dotenv.config({ path: rootEnvPath });
+} else {
+  dotenv.config();
+}
 connectDB();
 
 const app = express();
-app.use(cors());
+app.use(helmet());
+app.use(cors({
+  origin: process.env.CLIENT_URL ? [process.env.CLIENT_URL] : true,
+  credentials: true
+}));
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Rotalar
 app.use('/api/auth', authRoutes);
+app.use('/api/courses', coursesRoutes);
+app.use('/api/streams', streamsRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: process.env.CLIENT_URL || true,
     methods: ["GET", "POST"]
   }
 });
@@ -59,6 +83,87 @@ app.get('/api/room-messages/:roomId', (req, res) => {
 
 io.on("connection", (socket) => {
   console.log("🟢 Kullanıcı bağlandı:", socket.id);
+  // Kullanıcı login olduğunda kişisel odaya alın (bildirimler için)
+  socket.on('userLogin', (userId) => {
+    if (userId) {
+      socket.join(`user_${userId}`);
+    }
+  });
+
+  // Canlı yayın odasına katıl
+  socket.on('joinStream', ({ streamId, username }) => {
+    if (streamId) {
+      socket.join(`stream_${streamId}`);
+      console.log(`${username || socket.id} yayına katıldı: ${streamId}`);
+    }
+  });
+
+  // Canlı yayın yorumunu odaya yayınla
+  socket.on('streamComment', (comment) => {
+    if (comment?.streamId) {
+      io.to(`stream_${comment.streamId}`).emit('streamComment', comment);
+    }
+  });
+
+  // Mesaj bildirimi oluştur ve gönder
+  socket.on('newMessage', async (data) => {
+    try {
+      const { recipientId, senderName, message, senderId, messageId } = data || {};
+      if (!recipientId || !message) return;
+      const notification = new Notification({
+        userId: recipientId,
+        type: 'message',
+        title: 'Yeni Mesaj',
+        content: `${senderName || 'Bir kullanıcı'} size mesaj gönderdi: ${String(message).substring(0, 50)}${String(message).length > 50 ? '...' : ''}`,
+        link: `/livechat?sender=${senderId || ''}`,
+        metadata: { messageId, senderId }
+      });
+      await notification.save();
+      io.to(`user_${recipientId}`).emit('notification', notification);
+    } catch (error) {
+      console.error('Mesaj bildirimi hatası:', error);
+    }
+  });
+
+  // Yeni ders bildirimi
+  socket.on('newCourse', async (data) => {
+    try {
+      const { course, recipients = [] } = data || {};
+      if (!course || !recipients.length) return;
+      const notifications = recipients.map((userId) => ({
+        userId,
+        type: 'course',
+        title: 'Yeni Ders Eklendi',
+        content: `${course.title} dersi eklendi`,
+        link: `/courses/${course._id}`,
+        metadata: { courseId: course._id }
+      }));
+      const saved = await Notification.insertMany(notifications);
+      saved.forEach((n) => io.to(`user_${n.userId}`).emit('notification', n));
+    } catch (error) {
+      console.error('Ders bildirimi hatası:', error);
+    }
+  });
+
+  // Yeni yayın bildirimi
+  socket.on('newStream', async (data) => {
+    try {
+      const { stream, recipients = [] } = data || {};
+      if (!stream || !recipients.length) return;
+      const notifications = recipients.map((userId) => ({
+        userId,
+        type: 'stream',
+        title: 'Yeni Canlı Yayın',
+        content: `${stream.title} yayını başladı`,
+        link: `/canli-yayin`,
+        metadata: { streamId: stream._id }
+      }));
+      const saved = await Notification.insertMany(notifications);
+      saved.forEach((n) => io.to(`user_${n.userId}`).emit('notification', n));
+    } catch (error) {
+      console.error('Yayın bildirimi hatası:', error);
+    }
+  });
 
   // Kullanıcı bir odaya katılmak istediğinde
   socket.on("joinRoom", ({ roomId, username }) => {
@@ -143,6 +248,15 @@ io.on("connection", (socket) => {
 app.get('/api/online-users', (req, res) => {
   res.json({ users: Array.from(connectedUsers.values()) });
 });
+
+// Production: Serve React build
+if (process.env.NODE_ENV === 'production') {
+  const clientBuildPath = path.join(__dirname, '..', 'client', 'build');
+  app.use(express.static(clientBuildPath));
+  app.get(/.*/, (req, res) => {
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
+  });
+}
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`🚀 Sunucu çalışıyor: ${PORT}`));

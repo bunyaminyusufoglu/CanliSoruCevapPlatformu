@@ -20,7 +20,7 @@ const LiveStreamPage = () => {
 
   // Socket.io bağlantısı
   useEffect(() => {
-    socketRef.current = io('http://localhost:5000');
+    socketRef.current = io(process.env.REACT_APP_SOCKET_URL || '/');
 
     socketRef.current.on('streamComment', (comment) => {
       setComments(prev => [...prev, comment]);

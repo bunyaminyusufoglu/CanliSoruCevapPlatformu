@@ -8,12 +8,16 @@ const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleRegister = async () => {
+  const handleRegister = async (e) => {
+    e.preventDefault();
     try {
       const response = await register({ ad, soyad, username, email, password });
-      alert('Kayıt başarılı! Hoş geldiniz ' + response.data.username);
+      alert(response?.data?.message || 'Kayıt başarılı!');
+      // İsteğe bağlı: kayıt sonrası login sayfasına yönlendirme
+      window.location.href = '/login';
     } catch (err) {
-      alert('Kayıt hatası: ' + err.response.data.error);
+      const msg = err?.response?.data?.error || err?.message || 'Bilinmeyen hata';
+      alert('Kayıt hatası: ' + msg);
     }
   };
 

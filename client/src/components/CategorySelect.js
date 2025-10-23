@@ -9,7 +9,7 @@ const CategorySelect = ({ onSelect }) => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/categories');
+        const res = await axios.get((process.env.REACT_APP_API_URL || '/api') + '/categories');
         setCategories(res.data);
       } catch (err) {
         setError('Kategoriler yüklenemedi.');

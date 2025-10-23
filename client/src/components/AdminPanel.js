@@ -10,23 +10,23 @@ const AdminPanel = () => {
 
   useEffect(() => {
     // Kategori listesini çek
-    axios.get('http://localhost:5000/api/categories')
+    axios.get((process.env.REACT_APP_API_URL || '/api') + '/categories')
       .then(res => setCategories(res.data));
   }, []);
 
   useEffect(() => {
     if (!selectedCategory) return;
     // Oda kullanıcılarını çek
-    axios.get(`http://localhost:5000/api/room-users/${selectedCategory.id}`)
+    axios.get(`${process.env.REACT_APP_API_URL || '/api'}/room-users/${selectedCategory.id}`)
       .then(res => setUsers(res.data.users));
     // Oda mesaj geçmişini çek
-    axios.get(`http://localhost:5000/api/room-messages/${selectedCategory.id}`)
+    axios.get(`${process.env.REACT_APP_API_URL || '/api'}/room-messages/${selectedCategory.id}`)
       .then(res => setMessages(res.data.messages));
     // Periyodik güncelleme (canlılık için)
     const interval = setInterval(() => {
-      axios.get(`http://localhost:5000/api/room-users/${selectedCategory.id}`)
+      axios.get(`${process.env.REACT_APP_API_URL || '/api'}/room-users/${selectedCategory.id}`)
         .then(res => setUsers(res.data.users));
-      axios.get(`http://localhost:5000/api/room-messages/${selectedCategory.id}`)
+      axios.get(`${process.env.REACT_APP_API_URL || '/api'}/room-messages/${selectedCategory.id}`)
         .then(res => setMessages(res.data.messages));
     }, 2000);
     return () => clearInterval(interval);

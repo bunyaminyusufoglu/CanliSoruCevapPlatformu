@@ -22,7 +22,7 @@ const Profile = () => {
     const fetchProfile = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.get('http://localhost:5000/api/auth/profile', {
+            const response = await axios.get((process.env.REACT_APP_API_URL || '/api') + '/auth/profile', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setProfile(response.data);
@@ -39,7 +39,7 @@ const Profile = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            await axios.put('http://localhost:5000/api/auth/profile', profile, {
+            await axios.put((process.env.REACT_APP_API_URL || '/api') + '/auth/profile', profile, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setMessage('Profil başarıyla güncellendi!');

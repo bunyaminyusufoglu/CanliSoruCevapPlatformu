@@ -3,7 +3,7 @@ import { login } from '../api';
 import io from 'socket.io-client';
 
 // Socket bağlantısını component dışında kurarsan sayfa yenilense bile aynı bağlantı kullanılır
-const socket = io('http://localhost:5000');
+const socket = io(process.env.REACT_APP_SOCKET_URL || '/');
 
 const Login = () => {
   const [email, setEmail] = useState('');
