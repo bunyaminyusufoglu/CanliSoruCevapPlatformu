@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { login } from '../api';
 import io from 'socket.io-client';
 
@@ -33,29 +33,65 @@ const Login = () => {
   };
 
   return (
-    <div className="container mt-3">
-      <h2>Giriş Yap</h2>
-      <form onSubmit={handleLogin}>
-        <input
-          type="email"
-          className="form-control mb-2"
-          id="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          className="form-control mb-2"
-          id="password"
-          placeholder="Şifre"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button type="submit" className="btn btn-primary mt-2">Giriş Yap</button>
-      </form>
+    <div className="container mt-5">
+      <div className="row justify-content-center">
+        <div className="col-md-6 col-lg-4">
+          <div className="form-container">
+            <div className="text-center mb-4">
+              <div className="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style={{width: 80, height: 80}}>
+                <i className="fas fa-sign-in-alt fa-2x"></i>
+              </div>
+              <h2 className="fw-bold text-primary">Giriş Yap</h2>
+              <p className="text-muted">Hesabınıza giriş yapın</p>
+            </div>
+            
+            <form onSubmit={handleLogin}>
+              <div className="mb-3">
+                <label htmlFor="email" className="form-label">
+                  <i className="fas fa-envelope me-2"></i>Email
+                </label>
+                <input
+                  type="email"
+                  className="form-control form-control-lg"
+                  id="email"
+                  placeholder="Email adresinizi girin"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <div className="mb-4">
+                <label htmlFor="password" className="form-label">
+                  <i className="fas fa-lock me-2"></i>Şifre
+                </label>
+                <input
+                  type="password"
+                  className="form-control form-control-lg"
+                  id="password"
+                  placeholder="Şifrenizi girin"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <button type="submit" className="btn btn-primary btn-lg w-100 btn-custom">
+                <i className="fas fa-sign-in-alt me-2"></i>Giriş Yap
+              </button>
+            </form>
+            
+            <div className="text-center mt-4">
+              <p className="text-muted">
+                Hesabınız yok mu? 
+                <a href="/register" className="text-primary text-decoration-none ms-1">
+                  <i className="fas fa-user-plus me-1"></i>Kayıt Ol
+                </a>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

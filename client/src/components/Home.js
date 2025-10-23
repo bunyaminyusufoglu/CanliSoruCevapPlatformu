@@ -23,14 +23,28 @@ const Home = () => {
 
   return (
     <>
-      <div className="py-5 bg-light border-bottom">
+      <div className="hero-section">
         <Container>
-          <h1 className="display-6 fw-semibold mb-3">Canlı Soru‑Cevap Platformu</h1>
-          <p className="text-muted mb-4">Sorunu sor, canlı yayına katıl, eğitim içeriklerini takip et.</p>
-          <div className="d-flex gap-2">
-            <Button as={Link} to="/livechat" variant="primary">Canlı Sohbet</Button>
-            <Button as={Link} to="/canli-yayin" variant="outline-primary">Canlı Yayınlar</Button>
-            <Button as={Link} to="/courses" variant="outline-secondary">Eğitimler</Button>
+          <div className="text-center fade-in">
+            <h1 className="display-4 fw-bold mb-4">
+              <i className="fas fa-graduation-cap me-3"></i>
+              Canlı Soru‑Cevap Platformu
+            </h1>
+            <p className="lead mb-4">Sorunu sor, canlı yayına katıl, eğitim içeriklerini takip et. Öğrenmeye devam et!</p>
+            <div className="d-flex gap-3 justify-content-center flex-wrap">
+              <Button as={Link} to="/qa" variant="light" size="lg" className="btn-custom">
+                <i className="fas fa-question-circle me-2"></i>Soru & Cevap
+              </Button>
+              <Button as={Link} to="/livechat" variant="outline-light" size="lg" className="btn-custom">
+                <i className="fas fa-comments me-2"></i>Canlı Sohbet
+              </Button>
+              <Button as={Link} to="/canli-yayin" variant="outline-light" size="lg" className="btn-custom">
+                <i className="fas fa-video me-2"></i>Canlı Yayınlar
+              </Button>
+              <Button as={Link} to="/courses" variant="outline-light" size="lg" className="btn-custom">
+                <i className="fas fa-book me-2"></i>Eğitimler
+              </Button>
+            </div>
           </div>
         </Container>
       </div>
@@ -43,16 +57,29 @@ const Home = () => {
               <Button as={Link} to="/canli-yayin" size="sm" variant="outline-primary">Tümü</Button>
             </div>
             {streams.length === 0 ? (
-              <Card body className="text-muted">Şu anda aktif yayın yok.</Card>
+              <Card body className="text-muted text-center py-4">
+                <i className="fas fa-video fa-2x mb-3 text-muted"></i>
+                <p className="mb-0">Şu anda aktif yayın yok.</p>
+              </Card>
             ) : (
               streams.map((s) => (
-                <Card key={s._id} className="mb-3">
+                <Card key={s._id} className="mb-3 card-hover">
                   <Card.Body className="d-flex justify-content-between align-items-center">
-                    <div>
-                      <div className="fw-semibold">{s.title}</div>
-                      <div className="text-muted small">Yayıncı: {s.userId?.username || 'Anonim'}</div>
+                    <div className="d-flex align-items-center">
+                      <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style={{width: 40, height: 40}}>
+                        <i className="fas fa-play"></i>
+                      </div>
+                      <div>
+                        <div className="fw-semibold">{s.title}</div>
+                        <div className="text-muted small">
+                          <i className="fas fa-user me-1"></i>
+                          {s.userId?.username || 'Anonim'}
+                        </div>
+                      </div>
                     </div>
-                    <Button as={Link} to="/canli-yayin" size="sm">Katıl</Button>
+                    <Button as={Link} to="/canli-yayin" size="sm" variant="primary" className="btn-custom">
+                      <i className="fas fa-sign-in-alt me-1"></i>Katıl
+                    </Button>
                   </Card.Body>
                 </Card>
               ))
@@ -64,18 +91,28 @@ const Home = () => {
               <Button as={Link} to="/courses" size="sm" variant="outline-primary">Tümü</Button>
             </div>
             {courses.length === 0 ? (
-              <Card body className="text-muted">Henüz ders yok.</Card>
+              <Card body className="text-muted text-center py-4">
+                <i className="fas fa-book fa-2x mb-3 text-muted"></i>
+                <p className="mb-0">Henüz ders yok.</p>
+              </Card>
             ) : (
               courses.map((c) => (
-                <Card key={c._id} className="mb-3">
+                <Card key={c._id} className="mb-3 card-hover">
                   <Card.Body className="d-flex justify-content-between align-items-center">
-                    <div>
-                      <div className="fw-semibold">{c.title}</div>
-                      <div className="text-muted small">
-                        {(c.description || '').slice(0, 80)}{(c.description || '').length > 80 ? '…' : ''}
+                    <div className="d-flex align-items-center">
+                      <div className="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style={{width: 40, height: 40}}>
+                        <i className="fas fa-book"></i>
+                      </div>
+                      <div>
+                        <div className="fw-semibold">{c.title}</div>
+                        <div className="text-muted small">
+                          {(c.description || '').slice(0, 60)}{(c.description || '').length > 60 ? '…' : ''}
+                        </div>
                       </div>
                     </div>
-                    <Button as={Link} to="/courses" size="sm" variant="outline-secondary">İncele</Button>
+                    <Button as={Link} to="/courses" size="sm" variant="outline-success" className="btn-custom">
+                      <i className="fas fa-eye me-1"></i>İncele
+                    </Button>
                   </Card.Body>
                 </Card>
               ))

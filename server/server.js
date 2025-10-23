@@ -11,6 +11,7 @@ const authRoutes = require('./routes/authRoutes');
 const coursesRoutes = require('./routes/courses');
 const streamsRoutes = require('./routes/streams');
 const notificationsRoutes = require('./routes/notifications');
+const questionsRoutes = require('./routes/questions');
 const Notification = require('./models/Notification');
 
 // Load env from server/.env if exists, otherwise from project root .env
@@ -38,6 +39,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', coursesRoutes);
 app.use('/api/streams', streamsRoutes);
+app.use('/api/questions', questionsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 
 const server = http.createServer(app);

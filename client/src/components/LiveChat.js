@@ -37,29 +37,69 @@ const LiveChat = () => {
   }
 
   return (
-    <div className="container mt-3">
-      <h3>Canlı Sohbet - {selectedCategory.name}</h3>
-      <button className="btn btn-secondary mb-2" onClick={() => setSelectedCategory(null)}>
-        Kategori Değiştir
-      </button>
-      <div className="chat-box">
-        {chat.map((msg, index) => (
-          <div key={index} className="chat-message">
-            <strong>{msg.username}:</strong> {msg.message}
+    <div className="container mt-4">
+      <div className="row justify-content-center">
+        <div className="col-lg-8">
+          <div className="card shadow-sm">
+            <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+              <h4 className="mb-0">
+                <i className="fas fa-comments me-2"></i>
+                Canlı Sohbet - {selectedCategory.name}
+              </h4>
+              <button 
+                className="btn btn-outline-light btn-sm" 
+                onClick={() => setSelectedCategory(null)}
+              >
+                <i className="fas fa-arrow-left me-1"></i>Kategori Değiştir
+              </button>
+            </div>
+            <div className="card-body p-0">
+              <div className="chat-box">
+                {chat.length === 0 ? (
+                  <div className="text-center text-muted py-4">
+                    <i className="fas fa-comment-slash fa-2x mb-3"></i>
+                    <p>Henüz mesaj yok. İlk mesajı siz gönderin!</p>
+                  </div>
+                ) : (
+                  chat.map((msg, index) => (
+                    <div key={index} className="chat-message">
+                      <div className="d-flex align-items-start">
+                        <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style={{width: 32, height: 32, fontSize: 12}}>
+                          {msg.username?.charAt(0)?.toUpperCase() || 'U'}
+                        </div>
+                        <div className="flex-grow-1">
+                          <div className="fw-semibold text-primary">{msg.username}</div>
+                          <div>{msg.message}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+            <div className="card-footer">
+              <div className="input-group">
+                <input 
+                  type="text"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Mesajınızı yazın..."
+                  className="form-control"
+                  disabled={!selectedCategory}
+                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                />
+                <button 
+                  onClick={sendMessage} 
+                  className="btn btn-primary" 
+                  disabled={!selectedCategory || !message.trim()}
+                >
+                  <i className="fas fa-paper-plane"></i>
+                </button>
+              </div>
+            </div>
           </div>
-        ))}
+        </div>
       </div>
-      <input 
-        type="text"
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        placeholder="Mesajınızı yazın..."
-        className="form-control mt-2"
-        disabled={!selectedCategory}
-      />
-      <button onClick={sendMessage} className="btn btn-primary mt-2" disabled={!selectedCategory}>
-        Gönder
-      </button>
     </div>
   );
 };
