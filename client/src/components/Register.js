@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { register } from '../api';
+import { register, registerAdmin } from '../api';
 
 const Register = () => {
   const [ad, setAd] = useState('');
@@ -7,11 +7,18 @@ const Register = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminKey, setAdminKey] = useState('');
 
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      const response = await register({ ad, soyad, username, email, password });
+      let response;
+      if (isAdmin) {
+        response = await registerAdmin({ ad, soyad, username, email, password, adminKey });
+      } else {
+        response = await register({ ad, soyad, username, email, password });
+      }
       alert(response?.data?.message || 'Kayıt başarılı!');
       // İsteğe bağlı: kayıt sonrası login sayfasına yönlendirme
       window.location.href = '/login';
@@ -107,6 +114,44 @@ const Register = () => {
                   required
                 />
               </div>
+              
+              {/* Admin Kayıt Seçeneği */}
+              <div className="mb-4">
+                <div className="form-check">
+                  <input 
+                    className="form-check-input" 
+                    type="checkbox" 
+                    id="isAdmin"
+                    checked={isAdmin}
+                    onChange={(e) => setIsAdmin(e.target.checked)}
+                  />
+                  <label className="form-check-label" htmlFor="isAdmin">
+                    <i className="fas fa-crown me-2 text-warning"></i>
+                    Admin olarak kayıt ol
+                  </label>
+                </div>
+              </div>
+              
+              {isAdmin && (
+                <div className="mb-4">
+                  <label htmlFor="adminKey" className="form-label">
+                    <i className="fas fa-key me-2 text-warning"></i>Admin Anahtarı
+                  </label>
+                  <input 
+                    className="form-control form-control-lg" 
+                    id="adminKey"
+                    type="password" 
+                    placeholder="Admin anahtarını girin" 
+                    value={adminKey} 
+                    onChange={(e) => setAdminKey(e.target.value)} 
+                    required={isAdmin}
+                  />
+                  <div className="form-text">
+                    <i className="fas fa-info-circle me-1"></i>
+                    Admin anahtarı: <code>ADMIN2024</code>
+                  </div>
+                </div>
+              )}
               
               <button type="submit" className="btn btn-success btn-lg w-100 btn-custom">
                 <i className="fas fa-user-plus me-2"></i>Kayıt Ol

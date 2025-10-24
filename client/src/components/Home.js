@@ -23,25 +23,22 @@ const Home = () => {
 
   return (
     <>
-      <div className="hero-section">
+      <div className="py-5 bg-light border-bottom">
         <Container>
-          <div className="text-center fade-in">
-            <h1 className="display-4 fw-bold mb-4">
-              <i className="fas fa-graduation-cap me-3"></i>
-              Canlı Soru‑Cevap Platformu
+          <div className="text-center">
+            <h1 className="display-6 fw-semibold mb-3">
+              <i className="fas fa-home me-2"></i>
+              Hoş Geldiniz!
             </h1>
-            <p className="lead mb-4">Sorunu sor, canlı yayına katıl, eğitim içeriklerini takip et. Öğrenmeye devam et!</p>
-            <div className="d-flex gap-3 justify-content-center flex-wrap">
-              <Button as={Link} to="/qa" variant="light" size="lg" className="btn-custom">
+            <p className="text-muted mb-4">Eğitim içeriklerinizi keşfedin ve öğrenmeye devam edin.</p>
+            <div className="d-flex gap-2 justify-content-center flex-wrap">
+              <Button as={Link} to="/qa" variant="primary" className="btn-custom">
                 <i className="fas fa-question-circle me-2"></i>Soru & Cevap
               </Button>
-              <Button as={Link} to="/livechat" variant="outline-light" size="lg" className="btn-custom">
-                <i className="fas fa-comments me-2"></i>Canlı Sohbet
-              </Button>
-              <Button as={Link} to="/canli-yayin" variant="outline-light" size="lg" className="btn-custom">
+              <Button as={Link} to="/canli-yayin" variant="outline-primary" className="btn-custom">
                 <i className="fas fa-video me-2"></i>Canlı Yayınlar
               </Button>
-              <Button as={Link} to="/courses" variant="outline-light" size="lg" className="btn-custom">
+              <Button as={Link} to="/courses" variant="outline-secondary" className="btn-custom">
                 <i className="fas fa-book me-2"></i>Eğitimler
               </Button>
             </div>
