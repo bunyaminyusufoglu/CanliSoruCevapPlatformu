@@ -10,6 +10,7 @@ import AdminPanelPage from './views/AdminPanelPage';
 import LiveStreamPage from './views/LiveStreamPage';
 import CoursesPage from './views/CoursesPage';
 import QAPage from './views/QAPage';
+import QuestionDetailPage from './views/QuestionDetailPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import Navigation from './components/Navigation';
@@ -33,6 +34,7 @@ function AppContent() {
       <Routes>
         <Route path="/" element={user ? <HomePage /> : <LandingPage />} />
         <Route path="/qa" element={<QAPage />} />
+        <Route path="/questions/:id" element={<QuestionDetailPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/profile" element={<ProfilePage />} />

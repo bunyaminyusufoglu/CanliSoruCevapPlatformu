@@ -26,6 +26,7 @@ router.get('/', async (req, res) => {
     const questions = await Question.find(query)
       .populate('author', 'username')
       .populate('answers.author', 'username')
+      .populate('answers.replies.author', 'username')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
@@ -49,7 +50,8 @@ router.get('/:id', async (req, res) => {
   try {
     const question = await Question.findById(req.params.id)
       .populate('author', 'username')
-      .populate('answers.author', 'username');
+      .populate('answers.author', 'username')
+      .populate('answers.replies.author', 'username');
 
     if (!question) {
       return res.status(404).json({ success: false, error: 'Soru bulunamadı' });
@@ -104,6 +106,39 @@ router.post('/:id/answers', auth, async (req, res) => {
 
     await question.save();
     await question.populate('answers.author', 'username');
+
+    res.json({ success: true, question });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// Cevaba yanıt ekle
+router.post('/:id/answers/:answerId/replies', auth, async (req, res) => {
+  try {
+    const { content } = req.body;
+    const question = await Question.findById(req.params.id);
+
+    if (!question) {
+      return res.status(404).json({ success: false, error: 'Soru bulunamadı' });
+    }
+
+    const answer = question.answers.id(req.params.answerId);
+    if (!answer) {
+      return res.status(404).json({ success: false, error: 'Cevap bulunamadı' });
+    }
+
+    // Cevaba yanıt ekle
+    answer.replies = answer.replies || [];
+    answer.replies.push({
+      content,
+      author: req.user.id,
+      createdAt: new Date()
+    });
+
+    await question.save();
+    await question.populate('answers.author', 'username');
+    await question.populate('answers.replies.author', 'username');
 
     res.json({ success: true, question });
   } catch (error) {

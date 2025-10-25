@@ -37,7 +37,22 @@ const questionSchema = new mongoose.Schema({
     createdAt: {
       type: Date,
       default: Date.now
-    }
+    },
+    replies: [{
+      content: {
+        type: String,
+        required: true
+      },
+      author: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now
+      }
+    }]
   }],
   tags: [{
     type: String,

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Form, Badge, Alert, Modal } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
+import { getQuestions, createQuestion, addAnswer, addReplyToAnswer, acceptAnswer } from '../api';
 
 const QAPage = () => {
   const [questions, setQuestions] = useState([]);
@@ -11,9 +12,12 @@ const QAPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showAskModal, setShowAskModal] = useState(false);
   const [showAnswerModal, setShowAnswerModal] = useState(false);
+  const [showReplyModal, setShowReplyModal] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [newQuestion, setNewQuestion] = useState({ title: '', content: '', category: 'genel', tags: '' });
   const [newAnswer, setNewAnswer] = useState('');
+  const [newReply, setNewReply] = useState('');
   const { user } = useAuth();
 
   const categories = [
@@ -33,16 +37,17 @@ const QAPage = () => {
   const fetchQuestions = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams();
-      if (searchTerm) params.append('search', searchTerm);
-      if (selectedCategory !== 'all') params.append('category', selectedCategory);
+      const params = {};
+      if (searchTerm) params.search = searchTerm;
+      if (selectedCategory !== 'all') params.category = selectedCategory;
       
-      const response = await axios.get(`/api/questions?${params}`);
+      const response = await getQuestions(params);
       if (response.data.success) {
         setQuestions(response.data.questions);
       }
     } catch (error) {
       setError('Sorular yüklenirken bir hata oluştu');
+      console.error('Sorular yüklenirken hata:', error);
     } finally {
       setLoading(false);
     }
@@ -52,7 +57,7 @@ const QAPage = () => {
     e.preventDefault();
     try {
       const tags = newQuestion.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
-      const response = await axios.post('/api/questions', {
+      const response = await createQuestion({
         ...newQuestion,
         tags
       });
@@ -64,13 +69,14 @@ const QAPage = () => {
       }
     } catch (error) {
       setError('Soru gönderilirken bir hata oluştu');
+      console.error('Soru gönderilirken hata:', error);
     }
   };
 
   const handleAnswerQuestion = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`/api/questions/${selectedQuestion._id}/answers`, {
+      const response = await addAnswer(selectedQuestion._id, {
         content: newAnswer
       });
       
@@ -82,17 +88,39 @@ const QAPage = () => {
       }
     } catch (error) {
       setError('Cevap gönderilirken bir hata oluştu');
+      console.error('Cevap gönderilirken hata:', error);
+    }
+  };
+
+  const handleReplyToAnswer = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await addReplyToAnswer(selectedQuestion._id, selectedAnswer._id, {
+        content: newReply
+      });
+      
+      if (response.data.success) {
+        setShowReplyModal(false);
+        setNewReply('');
+        setSelectedAnswer(null);
+        setSelectedQuestion(null);
+        fetchQuestions();
+      }
+    } catch (error) {
+      setError('Yanıt gönderilirken bir hata oluştu');
+      console.error('Yanıt gönderilirken hata:', error);
     }
   };
 
   const handleAcceptAnswer = async (questionId, answerId) => {
     try {
-      const response = await axios.put(`/api/questions/${questionId}/answers/${answerId}/accept`);
+      const response = await acceptAnswer(questionId, answerId);
       if (response.data.success) {
         fetchQuestions();
       }
     } catch (error) {
       setError('Cevap kabul edilirken bir hata oluştu');
+      console.error('Cevap kabul edilirken hata:', error);
     }
   };
 
@@ -214,12 +242,12 @@ const QAPage = () => {
                   <div className="d-flex justify-content-between align-items-start mb-3">
                     <div className="flex-grow-1">
                       <h5 className="card-title mb-2">
-                        <a 
-                          href={`/questions/${question._id}`} 
+                        <Link 
+                          to={`/questions/${question._id}`} 
                           className="text-decoration-none text-dark"
                         >
                           {question.title}
-                        </a>
+                        </Link>
                       </h5>
                       <div className="d-flex gap-2 mb-2">
                         <Badge bg={getCategoryColor(question.category)}>
@@ -249,7 +277,7 @@ const QAPage = () => {
                     }
                   </p>
                   
-                  <div className="d-flex justify-content-between align-items-center">
+                  <div className="d-flex justify-content-between align-items-center mb-3">
                     <div className="text-muted small">
                       <i className="fas fa-user me-1"></i>
                       {question.author?.username} • {formatDate(question.createdAt)}
@@ -260,7 +288,7 @@ const QAPage = () => {
                           <i className="fas fa-check me-1"></i>Çözüldü
                         </Badge>
                       )}
-                      {user && (
+                      {user && user._id !== question.author._id && (
                         <Button 
                           variant="outline-primary" 
                           size="sm"
@@ -274,6 +302,74 @@ const QAPage = () => {
                       )}
                     </div>
                   </div>
+
+                  {/* Cevaplar */}
+                  {question.answers && question.answers.length > 0 && (
+                    <div className="border-top pt-3">
+                      <h6 className="mb-3">
+                        <i className="fas fa-comments me-2"></i>
+                        Cevaplar ({question.answers.length})
+                      </h6>
+                      {question.answers.map((answer, answerIndex) => (
+                        <div key={answerIndex} className="mb-3 p-3 bg-light rounded">
+                          <div className="d-flex justify-content-between align-items-start mb-2">
+                            <div className="flex-grow-1">
+                              <div className="d-flex align-items-center mb-2">
+                                <strong className="me-2">{answer.author?.username}</strong>
+                                <small className="text-muted">{formatDate(answer.createdAt)}</small>
+                                {answer.isAccepted && (
+                                  <Badge bg="success" className="ms-2">
+                                    <i className="fas fa-check me-1"></i>Kabul Edildi
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="mb-2">{answer.content}</p>
+                            </div>
+                            {user && user._id === question.author._id && !answer.isAccepted && (
+                              <Button 
+                                variant="outline-success" 
+                                size="sm"
+                                onClick={() => handleAcceptAnswer(question._id, answer._id)}
+                              >
+                                <i className="fas fa-check me-1"></i>Kabul Et
+                              </Button>
+                            )}
+                          </div>
+                          
+                          {/* Yanıtlar */}
+                          {answer.replies && answer.replies.length > 0 && (
+                            <div className="ms-3 mt-2">
+                              {answer.replies.map((reply, replyIndex) => (
+                                <div key={replyIndex} className="mb-2 p-2 bg-white rounded border-start border-3 border-info">
+                                  <div className="d-flex align-items-center mb-1">
+                                    <strong className="me-2 text-info">{reply.author?.username}</strong>
+                                    <small className="text-muted">{formatDate(reply.createdAt)}</small>
+                                  </div>
+                                  <p className="mb-0">{reply.content}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Yanıt Verme Butonu */}
+                          {user && user._id === question.author._id && (
+                            <Button 
+                              variant="outline-info" 
+                              size="sm"
+                              className="mt-2"
+                              onClick={() => {
+                                setSelectedQuestion(question);
+                                setSelectedAnswer(answer);
+                                setShowReplyModal(true);
+                              }}
+                            >
+                              <i className="fas fa-reply me-1"></i>Yanıt Ver
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </Card.Body>
               </Card>
             </Col>
@@ -382,6 +478,51 @@ const QAPage = () => {
             </Button>
             <Button variant="primary" type="submit" className="btn-custom">
               <i className="fas fa-paper-plane me-2"></i>Cevap Gönder
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
+
+      {/* Yanıt Verme Modal */}
+      <Modal show={showReplyModal} onHide={() => setShowReplyModal(false)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <i className="fas fa-reply me-2"></i>Cevaba Yanıt Ver
+          </Modal.Title>
+        </Modal.Header>
+        <Form onSubmit={handleReplyToAnswer}>
+          <Modal.Body>
+            {selectedAnswer && (
+              <div className="mb-3">
+                <h6>Cevap:</h6>
+                <div className="p-3 bg-light rounded">
+                  <div className="d-flex align-items-center mb-2">
+                    <strong className="me-2">{selectedAnswer.author?.username}</strong>
+                    <small className="text-muted">{formatDate(selectedAnswer.createdAt)}</small>
+                  </div>
+                  <p className="mb-0">{selectedAnswer.content}</p>
+                </div>
+              </div>
+            )}
+            
+            <Form.Group className="mb-3">
+              <Form.Label>Yanıtınız</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={4}
+                placeholder="Yanıtınızı yazın..."
+                value={newReply}
+                onChange={(e) => setNewReply(e.target.value)}
+                required
+              />
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowReplyModal(false)}>
+              İptal
+            </Button>
+            <Button variant="primary" type="submit" className="btn-custom">
+              <i className="fas fa-paper-plane me-2"></i>Yanıt Gönder
             </Button>
           </Modal.Footer>
         </Form>
