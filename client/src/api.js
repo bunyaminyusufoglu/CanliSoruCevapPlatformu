@@ -46,3 +46,17 @@ export const deleteQuestion = (id) => API.delete(`/questions/${id}`);
 export const addAnswer = (questionId, answerData) => API.post(`/questions/${questionId}/answers`, answerData);
 export const addReplyToAnswer = (questionId, answerId, replyData) => API.post(`/questions/${questionId}/answers/${answerId}/replies`, replyData);
 export const acceptAnswer = (questionId, answerId) => API.put(`/questions/${questionId}/answers/${answerId}/accept`);
+
+// Image Upload API
+export const uploadAvatar = (formData) => API.post('/images/avatar', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
+export const uploadQuestionImage = (formData) => API.post('/images/question', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
+export const uploadCourseImage = (formData) => API.post('/images/course', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
+export const uploadImage = (formData) => API.post('/images/upload', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});

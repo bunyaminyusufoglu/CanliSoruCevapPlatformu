@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import ImageUpload from './ImageUpload';
 
 const Profile = () => {
     const [profile, setProfile] = useState({
@@ -53,6 +54,12 @@ const Profile = () => {
         }
     };
 
+    const handleAvatarUpload = (uploadData) => {
+        setProfile({ ...profile, avatar: uploadData.avatar });
+        setMessage('Profil resmi başarıyla güncellendi!');
+        setTimeout(() => setMessage(''), 3000);
+    };
+
     return (
         <div className="container mt-4">
             <div className="row">
@@ -70,6 +77,23 @@ const Profile = () => {
                         <div className="card-body">
                             {message && <div className="alert alert-success">{message}</div>}
                             {error && <div className="alert alert-danger">{error}</div>}
+                            
+                            {/* Profil Resmi Bölümü */}
+                            <div className="mb-4 text-center">
+                                <h5 className="mb-3">Profil Resmi</h5>
+                                <ImageUpload
+                                    endpoint="/api/images/avatar"
+                                    onUploadSuccess={handleAvatarUpload}
+                                    buttonText="Profil Resmi Değiştir"
+                                    buttonVariant="outline-primary"
+                                    showPreview={true}
+                                    previewImage={profile.avatar}
+                                    circular={true}
+                                    buttonSize="sm"
+                                />
+                            </div>
+
+                            <hr className="my-4" />
                             
                             {isEditing ? (
                                 <form onSubmit={handleSubmit}>
@@ -138,6 +162,21 @@ const Profile = () => {
                                 </form>
                             ) : (
                                 <div>
+                                    {profile.avatar && (
+                                        <div className="text-center mb-3">
+                                            <img 
+                                                src={profile.avatar} 
+                                                alt="Avatar" 
+                                                style={{
+                                                    width: '120px',
+                                                    height: '120px',
+                                                    borderRadius: '50%',
+                                                    objectFit: 'cover',
+                                                    border: '3px solid #007bff'
+                                                }}
+                                            />
+                                        </div>
+                                    )}
                                     <p><strong>Ad Soyad:</strong> {profile.ad} {profile.soyad}</p>
                                     <p><strong>Kullanıcı Adı:</strong> {profile.username}</p>
                                     <p><strong>E-posta:</strong> {profile.email}</p>

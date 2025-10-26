@@ -10,6 +10,10 @@ const questionSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  images: [{
+    type: String,
+    trim: true
+  }],
   category: {
     type: String,
     required: true,
@@ -25,6 +29,10 @@ const questionSchema = new mongoose.Schema({
       type: String,
       required: true
     },
+    images: [{
+      type: String,
+      trim: true
+    }],
     author: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -43,6 +51,10 @@ const questionSchema = new mongoose.Schema({
         type: String,
         required: true
       },
+      images: [{
+        type: String,
+        trim: true
+      }],
       author: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',

@@ -3,6 +3,7 @@ import { Container, Row, Col, Card, Button, Form, Badge, Alert, Modal } from 're
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getQuestions, createQuestion, addAnswer, addReplyToAnswer, acceptAnswer } from '../api';
+import ImageUpload from '../components/ImageUpload';
 
 const QAPage = () => {
   const [questions, setQuestions] = useState([]);
@@ -15,9 +16,11 @@ const QAPage = () => {
   const [showReplyModal, setShowReplyModal] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
-  const [newQuestion, setNewQuestion] = useState({ title: '', content: '', category: 'genel', tags: '' });
+  const [newQuestion, setNewQuestion] = useState({ title: '', content: '', category: 'genel', tags: '', images: [] });
   const [newAnswer, setNewAnswer] = useState('');
+  const [answerImages, setAnswerImages] = useState([]);
   const [newReply, setNewReply] = useState('');
+  const [replyImages, setReplyImages] = useState([]);
   const { user } = useAuth();
 
   const categories = [
@@ -32,6 +35,7 @@ const QAPage = () => {
 
   useEffect(() => {
     fetchQuestions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, selectedCategory]);
 
   const fetchQuestions = async () => {
@@ -64,7 +68,7 @@ const QAPage = () => {
       
       if (response.data.success) {
         setShowAskModal(false);
-        setNewQuestion({ title: '', content: '', category: 'genel', tags: '' });
+        setNewQuestion({ title: '', content: '', category: 'genel', tags: '', images: [] });
         fetchQuestions();
       }
     } catch (error) {
@@ -73,16 +77,32 @@ const QAPage = () => {
     }
   };
 
+  const handleQuestionImageUpload = (uploadData) => {
+    setNewQuestion({
+      ...newQuestion,
+      images: [...newQuestion.images, uploadData.url]
+    });
+  };
+
+  const removeQuestionImage = (index) => {
+    setNewQuestion({
+      ...newQuestion,
+      images: newQuestion.images.filter((_, i) => i !== index)
+    });
+  };
+
   const handleAnswerQuestion = async (e) => {
     e.preventDefault();
     try {
       const response = await addAnswer(selectedQuestion._id, {
-        content: newAnswer
+        content: newAnswer,
+        images: answerImages
       });
       
       if (response.data.success) {
         setShowAnswerModal(false);
         setNewAnswer('');
+        setAnswerImages([]);
         setSelectedQuestion(null);
         fetchQuestions();
       }
@@ -92,16 +112,26 @@ const QAPage = () => {
     }
   };
 
+  const handleAnswerImageUpload = (uploadData) => {
+    setAnswerImages([...answerImages, uploadData.url]);
+  };
+
+  const removeAnswerImage = (index) => {
+    setAnswerImages(answerImages.filter((_, i) => i !== index));
+  };
+
   const handleReplyToAnswer = async (e) => {
     e.preventDefault();
     try {
       const response = await addReplyToAnswer(selectedQuestion._id, selectedAnswer._id, {
-        content: newReply
+        content: newReply,
+        images: replyImages
       });
       
       if (response.data.success) {
         setShowReplyModal(false);
         setNewReply('');
+        setReplyImages([]);
         setSelectedAnswer(null);
         setSelectedQuestion(null);
         fetchQuestions();
@@ -110,6 +140,14 @@ const QAPage = () => {
       setError('Yanıt gönderilirken bir hata oluştu');
       console.error('Yanıt gönderilirken hata:', error);
     }
+  };
+
+  const handleReplyImageUpload = (uploadData) => {
+    setReplyImages([...replyImages, uploadData.url]);
+  };
+
+  const removeReplyImage = (index) => {
+    setReplyImages(replyImages.filter((_, i) => i !== index));
   };
 
   const handleAcceptAnswer = async (questionId, answerId) => {
@@ -277,6 +315,42 @@ const QAPage = () => {
                     }
                   </p>
                   
+                  {/* Soruda resim varsa göster */}
+                  {question.images && question.images.length > 0 && (
+                    <div className="d-flex gap-2 mb-3 flex-wrap">
+                      {question.images.slice(0, 3).map((img, idx) => (
+                        <img 
+                          key={idx}
+                          src={img} 
+                          alt={`Question attachment ${idx + 1}`}
+                          style={{
+                            width: '100px',
+                            height: '100px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '1px solid #dee2e6'
+                          }}
+                        />
+                      ))}
+                      {question.images.length > 3 && (
+                        <div 
+                          style={{
+                            width: '100px',
+                            height: '100px',
+                            borderRadius: '8px',
+                            border: '1px solid #dee2e6',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: '#f8f9fa'
+                          }}
+                        >
+                          <span className="text-muted">+{question.images.length - 3}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
                   <div className="d-flex justify-content-between align-items-center mb-3">
                     <div className="text-muted small">
                       <i className="fas fa-user me-1"></i>
@@ -324,6 +398,28 @@ const QAPage = () => {
                                 )}
                               </div>
                               <p className="mb-2">{answer.content}</p>
+                              
+                              {/* Cevapda resim varsa göster */}
+                              {answer.images && answer.images.length > 0 && (
+                                <div className="d-flex gap-2 mb-2 flex-wrap">
+                                  {answer.images.map((img, imgIdx) => (
+                                    <img 
+                                      key={imgIdx}
+                                      src={img} 
+                                      alt={`Answer attachment ${imgIdx + 1}`}
+                                      style={{
+                                        maxWidth: '200px',
+                                        maxHeight: '150px',
+                                        objectFit: 'cover',
+                                        borderRadius: '8px',
+                                        border: '1px solid #dee2e6',
+                                        cursor: 'pointer'
+                                      }}
+                                      onClick={() => window.open(img, '_blank')}
+                                    />
+                                  ))}
+                                </div>
+                              )}
                             </div>
                             {user && user._id === question.author._id && !answer.isAccepted && (
                               <Button 
@@ -346,6 +442,28 @@ const QAPage = () => {
                                     <small className="text-muted">{formatDate(reply.createdAt)}</small>
                                   </div>
                                   <p className="mb-0">{reply.content}</p>
+                                  
+                                  {/* Yanıtta resim varsa göster */}
+                                  {reply.images && reply.images.length > 0 && (
+                                    <div className="d-flex gap-2 mt-2 flex-wrap">
+                                      {reply.images.map((img, rImgIdx) => (
+                                        <img 
+                                          key={rImgIdx}
+                                          src={img} 
+                                          alt={`Reply attachment ${rImgIdx + 1}`}
+                                          style={{
+                                            maxWidth: '150px',
+                                            maxHeight: '100px',
+                                            objectFit: 'cover',
+                                            borderRadius: '8px',
+                                            border: '1px solid #dee2e6',
+                                            cursor: 'pointer'
+                                          }}
+                                          onClick={() => window.open(img, '_blank')}
+                                        />
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
                               ))}
                             </div>
@@ -432,6 +550,58 @@ const QAPage = () => {
                 onChange={(e) => setNewQuestion({...newQuestion, tags: e.target.value})}
               />
             </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>
+                <i className="fas fa-image me-2"></i>Resimler (opsiyonel)
+              </Form.Label>
+              <ImageUpload
+                endpoint="/api/images/question"
+                onUploadSuccess={handleQuestionImageUpload}
+                buttonText="Resim Ekle"
+                buttonVariant="outline-secondary"
+                showPreview={false}
+                buttonSize="sm"
+              />
+              
+              {/* Yüklenen resimleri göster */}
+              {newQuestion.images.length > 0 && (
+                <div className="mt-3">
+                  <small className="text-muted d-block mb-2">Yüklenen Resimler:</small>
+                  <div className="d-flex gap-2 flex-wrap">
+                    {newQuestion.images.map((img, idx) => (
+                      <div key={idx} style={{ position: 'relative' }}>
+                        <img 
+                          src={img} 
+                          alt={`Upload ${idx + 1}`}
+                          style={{
+                            width: '100px',
+                            height: '100px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '1px solid #dee2e6'
+                          }}
+                        />
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          style={{
+                            position: 'absolute',
+                            top: '-8px',
+                            right: '-8px',
+                            padding: '2px 6px',
+                            fontSize: '10px'
+                          }}
+                          onClick={() => removeQuestionImage(idx)}
+                        >
+                          <i className="fas fa-times"></i>
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </Form.Group>
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={() => setShowAskModal(false)}>
@@ -470,6 +640,57 @@ const QAPage = () => {
                 onChange={(e) => setNewAnswer(e.target.value)}
                 required
               />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>
+                <i className="fas fa-image me-2"></i>Resimler (opsiyonel)
+              </Form.Label>
+              <ImageUpload
+                endpoint="/api/images/question"
+                onUploadSuccess={handleAnswerImageUpload}
+                buttonText="Resim Ekle"
+                buttonVariant="outline-secondary"
+                showPreview={false}
+                buttonSize="sm"
+              />
+              
+              {answerImages.length > 0 && (
+                <div className="mt-3">
+                  <small className="text-muted d-block mb-2">Yüklenen Resimler:</small>
+                  <div className="d-flex gap-2 flex-wrap">
+                    {answerImages.map((img, idx) => (
+                      <div key={idx} style={{ position: 'relative' }}>
+                        <img 
+                          src={img} 
+                          alt={`Upload ${idx + 1}`}
+                          style={{
+                            width: '100px',
+                            height: '100px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '1px solid #dee2e6'
+                          }}
+                        />
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          style={{
+                            position: 'absolute',
+                            top: '-8px',
+                            right: '-8px',
+                            padding: '2px 6px',
+                            fontSize: '10px'
+                          }}
+                          onClick={() => removeAnswerImage(idx)}
+                        >
+                          <i className="fas fa-times"></i>
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </Form.Group>
           </Modal.Body>
           <Modal.Footer>
@@ -515,6 +736,57 @@ const QAPage = () => {
                 onChange={(e) => setNewReply(e.target.value)}
                 required
               />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>
+                <i className="fas fa-image me-2"></i>Resimler (opsiyonel)
+              </Form.Label>
+              <ImageUpload
+                endpoint="/api/images/question"
+                onUploadSuccess={handleReplyImageUpload}
+                buttonText="Resim Ekle"
+                buttonVariant="outline-secondary"
+                showPreview={false}
+                buttonSize="sm"
+              />
+              
+              {replyImages.length > 0 && (
+                <div className="mt-3">
+                  <small className="text-muted d-block mb-2">Yüklenen Resimler:</small>
+                  <div className="d-flex gap-2 flex-wrap">
+                    {replyImages.map((img, idx) => (
+                      <div key={idx} style={{ position: 'relative' }}>
+                        <img 
+                          src={img} 
+                          alt={`Upload ${idx + 1}`}
+                          style={{
+                            width: '100px',
+                            height: '100px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '1px solid #dee2e6'
+                          }}
+                        />
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          style={{
+                            position: 'absolute',
+                            top: '-8px',
+                            right: '-8px',
+                            padding: '2px 6px',
+                            fontSize: '10px'
+                          }}
+                          onClick={() => removeReplyImage(idx)}
+                        >
+                          <i className="fas fa-times"></i>
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </Form.Group>
           </Modal.Body>
           <Modal.Footer>
