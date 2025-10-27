@@ -52,6 +52,10 @@ router.put('/:id/end', auth, adminAuth, async (req, res) => {
     if (!stream) {
       return res.status(404).json({ success: false, error: 'Yayın bulunamadı' });
     }
+    // Only creator can end the stream
+    if (String(stream.userId) !== String(req.user._id)) {
+      return res.status(403).json({ success: false, error: 'Yalnızca yayını başlatan sonlandırabilir' });
+    }
     stream.isActive = false;
     await stream.save();
     res.json({ success: true, message: 'Yayın sonlandırıldı' });

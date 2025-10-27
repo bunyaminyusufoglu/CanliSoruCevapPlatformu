@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
+import { getStreams, createStream as apiCreateStream, addStreamComment as apiAddStreamComment, endStream as apiEndStream } from '../api';
 import { io } from 'socket.io-client';
 
 const LiveStreamPage = () => {
@@ -95,12 +95,12 @@ const LiveStreamPage = () => {
   useEffect(() => {
     const fetchStreams = async () => {
       try {
-        const response = await axios.get('/api/streams');
+        const response = await getStreams();
         if (response.data.success) {
           setStreams(response.data.streams);
         }
       } catch (error) {
-        setError('Yayınlar yüklenirken bir hata oluştu');
+        setError(error.response?.data?.error || 'Yayınlar yüklenirken bir hata oluştu');
       } finally {
         setLoading(false);
       }
@@ -115,18 +115,36 @@ const LiveStreamPage = () => {
     if (!newStreamTitle.trim()) return;
 
     try {
-      const response = await axios.post('/api/streams', {
+      const response = await apiCreateStream({
         title: newStreamTitle,
         userId: user._id
       });
 
       if (response.data.success) {
         setStreams(prev => [...prev, response.data.stream]);
+        setActiveStream(response.data.stream); // Creator joins immediately
         setNewStreamTitle('');
         setSuccess('Yayın başarıyla oluşturuldu');
       }
     } catch (error) {
-      setError('Yayın oluşturulurken bir hata oluştu');
+      const msg = error.response?.data?.error || error.response?.data?.message || error.message;
+      setError(msg || 'Yayın oluşturulurken bir hata oluştu');
+    }
+  };
+
+  // Yayını sonlandır (sadece admin/oluşturan)
+  const handleEndStream = async () => {
+    if (!activeStream) return;
+    try {
+      const response = await apiEndStream(activeStream._id);
+      if (response.data.success) {
+        setStreams(prev => prev.filter(s => s._id !== activeStream._id));
+        setActiveStream(null);
+        setSuccess('Yayın sonlandırıldı');
+      }
+    } catch (error) {
+      const msg = error.response?.data?.error || error.response?.data?.message || error.message;
+      setError(msg || 'Yayın sonlandırılırken bir hata oluştu');
     }
   };
 
@@ -144,13 +162,14 @@ const LiveStreamPage = () => {
     };
 
     try {
-      const response = await axios.post('/api/streams/comment', comment);
+      const response = await apiAddStreamComment(comment);
       if (response.data.success) {
         socketRef.current.emit('streamComment', comment);
         setNewComment('');
       }
     } catch (error) {
-      setError('Yorum gönderilirken bir hata oluştu');
+      const msg = error.response?.data?.error || error.response?.data?.message || error.message;
+      setError(msg || 'Yorum gönderilirken bir hata oluştu');
     }
   };
 
@@ -197,6 +216,11 @@ const LiveStreamPage = () => {
             <div>
               <h2>{activeStream.title}</h2>
               <div ref={jitsiContainerRef} className="mb-3" />
+              {user?.isAdmin && activeStream?.userId && String(activeStream.userId?._id || activeStream.userId) === String(user?._id) && (
+                <Button variant="danger" onClick={handleEndStream} className="mb-3">
+                  Yayını Sonlandır
+                </Button>
+              )}
             </div>
           ) : (
             <Alert variant="info">

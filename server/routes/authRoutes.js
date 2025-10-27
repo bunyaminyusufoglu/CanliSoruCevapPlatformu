@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const adminAuth = require('../middleware/adminAuth');
 
 router.post('/register', async (req, res) => {
   const { ad, soyad, username, email, password } = req.body;
@@ -163,6 +164,46 @@ router.put('/profile/password', auth, async (req, res) => {
     res.json({ message: 'Şifre başarıyla güncellendi.' });
   } catch (err) {
     res.status(500).json({ error: 'Şifre güncellenemedi.' });
+  }
+});
+
+// Admin: list users
+router.get('/admin/users', auth, adminAuth, async (req, res) => {
+  try {
+    const users = await User.find().select('-password');
+    res.json({ success: true, users });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Kullanıcılar getirilemedi.' });
+  }
+});
+
+// Admin: toggle admin
+router.put('/admin/users/:id/toggle-admin', auth, adminAuth, async (req, res) => {
+  try {
+    if (String(req.user._id) === String(req.params.id)) {
+      return res.status(400).json({ success: false, error: 'Kendi admin yetkinizi değiştiremezsiniz.' });
+    }
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, error: 'Kullanıcı bulunamadı.' });
+    user.isAdmin = !user.isAdmin;
+    await user.save();
+    res.json({ success: true, user: { ...user.toObject(), password: undefined } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Yetki güncellenemedi.' });
+  }
+});
+
+// Admin: delete user
+router.delete('/admin/users/:id', auth, adminAuth, async (req, res) => {
+  try {
+    if (String(req.user._id) === String(req.params.id)) {
+      return res.status(400).json({ success: false, error: 'Kendinizi silemezsiniz.' });
+    }
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) return res.status(404).json({ success: false, error: 'Kullanıcı bulunamadı.' });
+    res.json({ success: true, message: 'Kullanıcı silindi.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Kullanıcı silinemedi.' });
   }
 });
 

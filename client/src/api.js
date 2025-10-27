@@ -60,3 +60,24 @@ export const uploadCourseImage = (formData) => API.post('/images/course', formDa
 export const uploadImage = (formData) => API.post('/images/upload', formData, {
   headers: { 'Content-Type': 'multipart/form-data' }
 });
+
+// Courses API
+export const createCourse = (formData) => API.post('/courses', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
+
+// Streams API
+export const getStreams = () => API.get('/streams');
+export const createStream = (payload) => API.post('/streams', payload);
+export const addStreamComment = (payload) => API.post('/streams/comment', payload);
+export const endStream = (id) => API.put(`/streams/${id}/end`);
+
+// Admin Users API
+export const adminListUsers = () => API.get('/auth/admin/users');
+export const adminToggleUserAdmin = (userId) => API.put(`/auth/admin/users/${userId}/toggle-admin`);
+export const adminDeleteUser = (userId) => API.delete(`/auth/admin/users/${userId}`);
+
+// Admin Courses API
+export const adminListCourses = () => API.get('/courses/admin/list');
+export const adminUpdateCourse = (id, payload) => API.put(`/courses/admin/${id}`, payload);
+export const adminDeleteCourse = (id) => API.delete(`/courses/${id}`);

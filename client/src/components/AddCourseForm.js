@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Form, Button, Alert } from 'react-bootstrap';
-import axios from 'axios';
+import { createCourse } from '../api';
 
 const AddCourseForm = ({ onCourseAdded }) => {
   const [formData, setFormData] = useState({
@@ -46,11 +46,7 @@ const AddCourseForm = ({ onCourseAdded }) => {
         formDataToSend.append('pdf', formData.pdfFile);
       }
 
-      const response = await axios.post('/api/courses', formDataToSend, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      const response = await createCourse(formDataToSend);
 
       if (response.data.success) {
         setSuccess('Ders başarıyla eklendi!');
@@ -63,7 +59,11 @@ const AddCourseForm = ({ onCourseAdded }) => {
         onCourseAdded && onCourseAdded();
       }
     } catch (error) {
-      setError(error.response?.data?.message || 'Ders eklenirken bir hata oluştu');
+      const data = error.response?.data;
+      const serverMsg = typeof data === 'string' 
+        ? data 
+        : (data?.message || data?.error);
+      setError(serverMsg || error.message || 'Ders eklenirken bir hata oluştu');
     } finally {
       setLoading(false);
     }

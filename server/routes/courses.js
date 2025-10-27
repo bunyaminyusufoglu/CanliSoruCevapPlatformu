@@ -39,6 +39,25 @@ const upload = multer({
   }
 });
 
+// Wrap multer to return JSON errors instead of generic 500
+const handleCourseUpload = (req, res, next) => {
+  const fields = upload.fields([
+    { name: 'video', maxCount: 1 },
+    { name: 'pdf', maxCount: 1 }
+  ]);
+  fields(req, res, (err) => {
+    if (!err) return next();
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({ success: false, message: 'Dosya boyutu 100MB sınırını aşıyor.' });
+      }
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    // Custom errors from fileFilter etc.
+    return res.status(400).json({ success: false, message: err?.message || 'Dosya yükleme hatası.' });
+  });
+};
+
 // Get all courses
 router.get('/', async (req, res) => {
   try {
@@ -54,10 +73,7 @@ router.get('/', async (req, res) => {
 });
 
 // Add new course (admin only)
-router.post('/', adminAuth, upload.fields([
-  { name: 'video', maxCount: 1 },
-  { name: 'pdf', maxCount: 1 }
-]), async (req, res) => {
+router.post('/', auth, adminAuth, handleCourseUpload, async (req, res) => {
   try {
     const { title, description } = req.body;
     const videoFile = req.files?.video?.[0];
@@ -106,7 +122,7 @@ router.post('/comment', auth, async (req, res) => {
 });
 
 // Delete course (admin only)
-router.delete('/:id', adminAuth, async (req, res) => {
+router.delete('/:id', auth, adminAuth, async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
     if (!course) {
@@ -136,11 +152,34 @@ router.delete('/:id', adminAuth, async (req, res) => {
   }
 });
 
+// List all courses (admin)
+router.get('/admin/list', auth, adminAuth, async (req, res) => {
+  try {
+    const courses = await Course.find().sort({ createdAt: -1 });
+    res.json({ success: true, courses });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Dersler getirilemedi' });
+  }
+});
+
+// Update course basic fields (admin)
+router.put('/admin/:id', auth, adminAuth, async (req, res) => {
+  try {
+    const { title, description } = req.body;
+    const course = await Course.findByIdAndUpdate(
+      req.params.id,
+      { title, description },
+      { new: true }
+    );
+    if (!course) return res.status(404).json({ success: false, message: 'Ders bulunamadı' });
+    res.json({ success: true, course });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Ders güncellenemedi' });
+  }
+});
+
 // Update course (admin only)
-router.put('/:id', adminAuth, upload.fields([
-  { name: 'video', maxCount: 1 },
-  { name: 'pdf', maxCount: 1 }
-]), async (req, res) => {
+router.put('/:id', auth, adminAuth, handleCourseUpload, async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
     if (!course) {
