@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import HomePage from './views/HomePage';
-import LandingPage from './views/LandingPage';
 import LoginPage from './views/LoginPage';
 import RegisterPage from './views/RegisterPage';
 import ProfilePage from './views/ProfilePage';
@@ -13,10 +12,10 @@ import QAPage from './views/QAPage';
 import QuestionDetailPage from './views/QuestionDetailPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
-import Navigation from './components/Navigation';
+import Header from './components/Header';
 
 function AppContent() {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
 
   if (loading) {
     return (
@@ -30,9 +29,13 @@ function AppContent() {
 
   return (
     <div className="App">
-      <Navigation />
+      <Header />
       <Routes>
-        <Route path="/" element={user ? <HomePage /> : <LandingPage />} />
+        <Route path="/" element={
+          <PrivateRoute>
+            <HomePage />
+          </PrivateRoute>
+        } />
         <Route path="/qa" element={<QAPage />} />
         <Route path="/questions/:id" element={<QuestionDetailPage />} />
         <Route path="/login" element={<LoginPage />} />

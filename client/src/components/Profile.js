@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ImageUpload from './ImageUpload';
+import { useAuth } from '../contexts/AuthContext';
 
 const Profile = () => {
+    const { setUser } = useAuth();
     const [profile, setProfile] = useState({
         ad: '',
         soyad: '',
@@ -56,6 +58,9 @@ const Profile = () => {
 
     const handleAvatarUpload = (uploadData) => {
         setProfile({ ...profile, avatar: uploadData.avatar });
+        if (typeof setUser === 'function') {
+            setUser(prev => ({ ...(prev || {}), avatar: uploadData.avatar }));
+        }
         setMessage('Profil resmi başarıyla güncellendi!');
         setTimeout(() => setMessage(''), 3000);
     };

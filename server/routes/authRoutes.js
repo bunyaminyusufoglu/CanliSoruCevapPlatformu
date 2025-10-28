@@ -26,38 +26,7 @@ router.post('/register', async (req, res) => {
 });
 
 // Admin kayıt endpoint'i
-router.post('/register-admin', async (req, res) => {
-  const { ad, soyad, username, email, password, adminKey } = req.body;
-  try {
-    // Admin anahtarı kontrolü
-    if (adminKey !== 'ADMIN2024') {
-      return res.status(403).json({ error: 'Geçersiz admin anahtarı.' });
-    }
-
-    if (!ad || !soyad || !username || !email || !password) {
-      return res.status(400).json({ error: 'Tüm alanlar zorunludur.' });
-    }
-    
-    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
-    if (existingUser) {
-      return res.status(400).json({ error: 'Bu e-posta veya kullanıcı adı zaten kullanılıyor.' });
-    }
-    
-    const user = new User({ 
-      ad, 
-      soyad, 
-      username, 
-      email, 
-      password, 
-      isAdmin: true 
-    });
-    await user.save();
-    res.status(201).json({ message: 'Admin kayıt başarılı!' });
-  } catch (err) {
-    const msg = err?.message || 'Admin kullanıcı oluşturulamadı.';
-    res.status(400).json({ error: msg });
-  }
-});
+// Admin kayıt kapatıldı (tek admin yeterli)
 
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;

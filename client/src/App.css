@@ -37,6 +37,80 @@
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }
 
+/* Login split layout */
+.login-page {
+  background: #f8fafc;
+  height: calc(100vh - 70px);
+}
+
+.login-page .row {
+  height: 100%;
+}
+
+.login-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  padding: 28px;
+}
+
+.form-tab {
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.form-tab.active {
+  color: #0d6efd;
+  border-bottom: 2px solid #0d6efd;
+  padding-bottom: 6px;
+}
+
+.input-with-icon {
+  position: relative;
+}
+
+.input-with-icon i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+.input-with-icon .form-control {
+  padding-left: 40px;
+  height: 48px;
+  border-radius: 12px;
+}
+
+.btn-teal {
+  background-color: #0d6efd !important;
+  color: white;
+  border: none;
+  height: 48px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.btn-teal:hover {
+  opacity: 0.95;
+}
+
+.login-hero {
+  border-radius: 50% 0 0 50%;
+}
+
+.hero-graphic {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+}
+
 .form-container h2 {
   text-align: center;
   margin-bottom: 1.5rem;
@@ -66,7 +140,7 @@
 
 /* Hero section */
 .hero-section {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-color:#0d6efd !important;
   color: white;
   padding: 4rem 0;
 }
@@ -87,6 +161,10 @@
 .navbar-brand {
   font-size: 1.5rem;
   font-weight: 700;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .navbar-nav .nav-link {
@@ -182,7 +260,7 @@
 
 /* Landing Page Styles */
 .hero-section {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #0d6efd;
   color: white;
   padding: 80px 0;
   position: relative;
@@ -225,7 +303,7 @@
 }
 
 .btn-custom.btn-primary {
-  background: linear-gradient(45deg, #667eea, #764ba2);
+  background-color:#0d6efd !important;
   border-color: transparent;
 }
 

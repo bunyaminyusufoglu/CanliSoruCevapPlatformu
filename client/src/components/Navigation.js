@@ -26,7 +26,7 @@ const Navigation = () => {
   }, [user]);
 
   return (
-    <Navbar bg="white" expand="lg" sticky="top" className="mb-4 border-bottom shadow-sm">
+    <Navbar bg="white" expand="lg" sticky="top" className="border-bottom shadow-sm">
       <Container>
         <Navbar.Brand as={Link} to="/" className="fw-semibold text-primary">
           <i className="fas fa-graduation-cap me-2"></i>
@@ -53,9 +53,18 @@ const Navigation = () => {
                   align={{ lg: 'end' }}
                   title={
                     <span className="d-inline-flex align-items-center">
-                      <span className="rounded-circle bg-primary text-white d-inline-flex justify-content-center align-items-center me-2" style={{ width: 32, height: 32, fontSize: 14 }}>
-                        {userInitials}
-                      </span>
+                      {user?.avatar ? (
+                        <img
+                          src={user.avatar}
+                          alt="avatar"
+                          className="me-2"
+                          style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '2px solid #dee2e6' }}
+                        />
+                      ) : (
+                        <span className="rounded-circle bg-primary text-white d-inline-flex justify-content-center align-items-center me-2" style={{ width: 32, height: 32, fontSize: 14 }}>
+                          {userInitials}
+                        </span>
+                      )}
                       <span className="d-none d-lg-inline">{user.username}</span>
                     </span>
                   }

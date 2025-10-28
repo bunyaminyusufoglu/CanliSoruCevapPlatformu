@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import CourseCard from '../components/CourseCard';
 import AddCourseForm from '../components/AddCourseForm';
 
+
 const CoursesPage = () => {
   const [courses, setCourses] = useState([]);
   const [error, setError] = useState('');

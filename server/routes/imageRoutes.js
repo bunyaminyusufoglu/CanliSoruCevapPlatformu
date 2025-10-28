@@ -12,7 +12,7 @@ const Question = require('../models/Question');
  */
 router.post('/avatar', auth, upload.single('avatar'), uploadAvatar, async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId);
+    const user = await User.findById(req.user.id);
     
     if (!user) {
       return res.status(404).json({ success: false, message: 'Kullanıcı bulunamadı' });
@@ -60,7 +60,7 @@ router.post('/question', auth, upload.single('image'), uploadQuestionImage, asyn
  */
 router.post('/course', auth, upload.single('image'), uploadCourseImage, async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId);
+    const user = await User.findById(req.user.id);
     
     if (!user || !user.isAdmin) {
       return res.status(403).json({ success: false, message: 'Yetkiniz yok' });
