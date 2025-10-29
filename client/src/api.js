@@ -47,6 +47,10 @@ export const addAnswer = (questionId, answerData) => API.post(`/questions/${ques
 export const addReplyToAnswer = (questionId, answerId, replyData) => API.post(`/questions/${questionId}/answers/${answerId}/replies`, replyData);
 export const acceptAnswer = (questionId, answerId) => API.put(`/questions/${questionId}/answers/${answerId}/accept`);
 
+// Admin Questions API
+export const adminListQuestions = () => API.get('/questions/admin/list');
+export const adminDeleteQuestion = (id) => API.delete(`/questions/admin/${id}`);
+
 // Image Upload API
 export const uploadAvatar = (formData) => API.post('/images/avatar', formData, {
   headers: { 'Content-Type': 'multipart/form-data' }
@@ -65,6 +69,11 @@ export const uploadImage = (formData) => API.post('/images/upload', formData, {
 export const createCourse = (formData) => API.post('/courses', formData, {
   headers: { 'Content-Type': 'multipart/form-data' }
 });
+export const updateCourseWithFiles = (id, formData) => API.put(`/courses/${id}`, formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
+export const addCourseComment = (payload) => API.post('/courses/comment', payload);
+export const deleteCourse = (id) => API.delete(`/courses/${id}`);
 
 // Streams API
 export const getStreams = () => API.get('/streams');

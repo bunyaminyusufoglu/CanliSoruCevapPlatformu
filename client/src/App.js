@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
-import HomePage from './views/HomePage';
 import LoginPage from './views/LoginPage';
 import RegisterPage from './views/RegisterPage';
 import ProfilePage from './views/ProfilePage';
@@ -33,7 +32,7 @@ function AppContent() {
       <Routes>
         <Route path="/" element={
           <PrivateRoute>
-            <HomePage />
+            <QAPage />
           </PrivateRoute>
         } />
         <Route path="/qa" element={<QAPage />} />

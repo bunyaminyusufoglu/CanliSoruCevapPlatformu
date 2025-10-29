@@ -131,20 +131,20 @@ router.delete('/:id', auth, adminAuth, async (req, res) => {
 
     // Delete associated files
     if (course.videoUrl) {
-      const videoPath = path.join(__dirname, '..', course.videoUrl);
+      const videoPath = path.resolve(__dirname, `.${course.videoUrl}`);
       if (fs.existsSync(videoPath)) {
         fs.unlinkSync(videoPath);
       }
     }
     
     if (course.pdfUrl) {
-      const pdfPath = path.join(__dirname, '..', course.pdfUrl);
+      const pdfPath = path.resolve(__dirname, `.${course.pdfUrl}`);
       if (fs.existsSync(pdfPath)) {
         fs.unlinkSync(pdfPath);
       }
     }
 
-    await course.remove();
+    await course.deleteOne();
     res.json({ success: true, message: 'Ders başarıyla silindi' });
   } catch (error) {
     console.error('Ders silinirken hata:', error);

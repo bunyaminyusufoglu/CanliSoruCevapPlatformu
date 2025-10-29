@@ -368,3 +368,62 @@
     color: white;
   }
 }
+
+/* Q&A - Sticky filter bar */
+:root {
+  --navbar-height: 70px;
+}
+
+.qa-sticky-filters {
+  position: static;
+  top: auto;
+  z-index: auto;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+}
+
+/* Q&A - Question card tweaks */
+.question-card {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tag-badge {
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+/* Floating action button */
+.fab-ask {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(13, 110, 253, 0.4);
+}
+
+/* Courses Page */
+.course-hero {
+  border-radius: 12px;
+}
+
+.course-card {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.course-card .course-thumb {
+  height: 180px;
+  object-fit: cover;
+}
+
+.course-video video {
+  border-radius: 8px;
+}

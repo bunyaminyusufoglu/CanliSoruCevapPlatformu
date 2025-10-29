@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Container, Row, Col, Card, Button, Form, Badge, Alert, Modal } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -32,6 +32,18 @@ const QAPage = () => {
     { value: 'mobile', label: 'Mobil Geliştirme' },
     { value: 'genel', label: 'Genel' }
   ];
+
+  const popularTags = useMemo(() => {
+    const tagToCount = {};
+    questions.forEach(q => {
+      (q.tags || []).forEach(tag => {
+        tagToCount[tag] = (tagToCount[tag] || 0) + 1;
+      });
+    });
+    return Object.entries(tagToCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+  }, [questions]);
 
   useEffect(() => {
     fetchQuestions();
@@ -208,26 +220,26 @@ const QAPage = () => {
 
       {error && <Alert variant="danger">{error}</Alert>}
 
-      {/* Filtreler */}
-      <Card className="mb-4">
+      {/* Filtreler - Sticky */}
+      <Card className="mb-4 qa-sticky-filters card-hover">
         <Card.Body>
-          <Row>
-            <Col md={6}>
+          <Row className="g-3 align-items-end">
+            <Col md={8}>
               <Form.Group>
-                <Form.Label>
-                  <i className="fas fa-search me-2"></i>Ara
+                <Form.Label className="text-muted small">
+                  <i className="fas fa-search me-2"></i>Arama
                 </Form.Label>
                 <Form.Control
                   type="text"
-                  placeholder="Soru ara..."
+                  placeholder="Başlık, içerik veya etiket ara..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </Form.Group>
             </Col>
-            <Col md={6}>
+            <Col md={4}>
               <Form.Group>
-                <Form.Label>
+                <Form.Label className="text-muted small">
                   <i className="fas fa-filter me-2"></i>Kategori
                 </Form.Label>
                 <Form.Select
@@ -246,214 +258,173 @@ const QAPage = () => {
         </Card.Body>
       </Card>
 
-      {/* Sorular Listesi */}
-      {loading ? (
-        <div className="text-center py-5">
-          <div className="spinner-border spinner-border-custom text-primary" role="status">
-            <span className="visually-hidden">Yükleniyor...</span>
-          </div>
-          <p className="mt-3 text-muted">Sorular yükleniyor...</p>
-        </div>
-      ) : questions.length === 0 ? (
-        <Card>
-          <Card.Body className="text-center py-5">
-            <i className="fas fa-question-circle fa-3x text-muted mb-3"></i>
-            <h4 className="text-muted">Henüz soru yok</h4>
-            <p className="text-muted">İlk soruyu siz sorun!</p>
-            {user && (
-              <Button 
-                variant="primary" 
-                onClick={() => setShowAskModal(true)}
-                className="btn-custom"
-              >
-                <i className="fas fa-plus me-2"></i>Soru Sor
-              </Button>
-            )}
-          </Card.Body>
-        </Card>
-      ) : (
-        <Row>
-          {questions.map(question => (
-            <Col key={question._id} lg={12} className="mb-4">
-              <Card className="card-hover">
-                <Card.Body>
-                  <div className="d-flex justify-content-between align-items-start mb-3">
-                    <div className="flex-grow-1">
-                      <h5 className="card-title mb-2">
-                        <Link 
-                          to={`/questions/${question._id}`} 
-                          className="text-decoration-none text-dark"
-                        >
-                          {question.title}
-                        </Link>
-                      </h5>
-                      <div className="d-flex gap-2 mb-2">
-                        <Badge bg={getCategoryColor(question.category)}>
-                          {categories.find(c => c.value === question.category)?.label}
-                        </Badge>
-                        {question.tags.map((tag, index) => (
-                          <Badge key={index} bg="outline-secondary" className="text-dark">
-                            #{tag}
-                          </Badge>
-                        ))}
+      {/* İçerik */}
+      <Row className="gy-4 qa-content-row">
+        <Col lg={8}>
+          {/* Sorular Listesi */}
+          {loading ? (
+            <div className="text-center py-5">
+              <div className="spinner-border spinner-border-custom text-primary" role="status">
+                <span className="visually-hidden">Yükleniyor...</span>
+              </div>
+              <p className="mt-3 text-muted">Sorular yükleniyor...</p>
+            </div>
+          ) : questions.length === 0 ? (
+            <Card>
+              <Card.Body className="text-center py-5">
+                <i className="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                <h4 className="text-muted">Henüz soru yok</h4>
+                <p className="text-muted">İlk soruyu siz sorun!</p>
+                {user && (
+                  <Button 
+                    variant="primary" 
+                    onClick={() => setShowAskModal(true)}
+                    className="btn-custom"
+                  >
+                    <i className="fas fa-plus me-2"></i>Soru Sor
+                  </Button>
+                )}
+              </Card.Body>
+            </Card>
+          ) : (
+            <Row>
+              {questions.map(question => (
+                <Col key={question._id} lg={12} className="mb-4">
+                  <Card className="card-hover question-card">
+                    <Card.Body>
+                      <div className="d-flex justify-content-between align-items-start mb-3">
+                        <div className="flex-grow-1">
+                          <h5 className="card-title mb-2">
+                            <Link 
+                              to={`/questions/${question._id}`} 
+                              className="text-decoration-none text-dark"
+                            >
+                              {question.title}
+                            </Link>
+                          </h5>
+                          <div className="d-flex gap-2 mb-2 flex-wrap">
+                            <Badge bg={getCategoryColor(question.category)}>
+                              {categories.find(c => c.value === question.category)?.label}
+                            </Badge>
+                            {question.tags.map((tag, index) => (
+                              <Badge key={index} bg="outline-secondary" className="text-dark tag-badge">
+                                #{tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="text-end">
+                          <div className="text-muted small mb-1">
+                            <i className="fas fa-eye me-1"></i>{question.views}
+                          </div>
+                          <div className="text-muted small">
+                            <i className="fas fa-comments me-1"></i>{question.answers.length}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="text-end">
-                      <div className="text-muted small">
-                        <i className="fas fa-eye me-1"></i>{question.views}
-                      </div>
-                      <div className="text-muted small">
-                        <i className="fas fa-comments me-1"></i>{question.answers.length}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <p className="card-text text-muted mb-3">
-                    {question.content.length > 200 
-                      ? `${question.content.substring(0, 200)}...` 
-                      : question.content
-                    }
-                  </p>
-                  
-                  {/* Soruda resim varsa göster */}
-                  {question.images && question.images.length > 0 && (
-                    <div className="d-flex gap-2 mb-3 flex-wrap">
-                      {question.images.slice(0, 3).map((img, idx) => (
-                        <img 
-                          key={idx}
-                          src={img} 
-                          alt={`Question attachment ${idx + 1}`}
-                          style={{
-                            width: '100px',
-                            height: '100px',
-                            objectFit: 'cover',
-                            borderRadius: '8px',
-                            border: '1px solid #dee2e6'
-                          }}
-                        />
-                      ))}
-                      {question.images.length > 3 && (
-                        <div 
-                          style={{
-                            width: '100px',
-                            height: '100px',
-                            borderRadius: '8px',
-                            border: '1px solid #dee2e6',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            backgroundColor: '#f8f9fa'
-                          }}
-                        >
-                          <span className="text-muted">+{question.images.length - 3}</span>
+                      
+                      <p className="card-text text-muted mb-3">
+                        {question.content.length > 200 
+                          ? `${question.content.substring(0, 200)}...` 
+                          : question.content
+                        }
+                      </p>
+                      
+                      {/* Soruda resim varsa göster */}
+                      {question.images && question.images.length > 0 && (
+                        <div className="d-flex gap-2 mb-3 flex-wrap">
+                          {question.images.slice(0, 3).map((img, idx) => (
+                            <img 
+                              key={idx}
+                              src={img} 
+                              alt={`Question attachment ${idx + 1}`}
+                              style={{
+                                width: '100px',
+                                height: '100px',
+                                objectFit: 'cover',
+                                borderRadius: '8px',
+                                border: '1px solid #dee2e6'
+                              }}
+                            />
+                          ))}
+                          {question.images.length > 3 && (
+                            <div 
+                              style={{
+                                width: '100px',
+                                height: '100px',
+                                borderRadius: '8px',
+                                border: '1px solid #dee2e6',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: '#f8f9fa'
+                              }}
+                            >
+                              <span className="text-muted">+{question.images.length - 3}</span>
+                            </div>
+                          )}
                         </div>
                       )}
-                    </div>
-                  )}
-                  
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <div className="text-muted small">
-                      <i className="fas fa-user me-1"></i>
-                      {question.author?.username} • {formatDate(question.createdAt)}
-                    </div>
-                    <div className="d-flex gap-2">
-                      {question.isResolved && (
-                        <Badge bg="success">
-                          <i className="fas fa-check me-1"></i>Çözüldü
-                        </Badge>
-                      )}
-                      {user && user._id !== question.author._id && (
-                        <Button 
-                          variant="outline-primary" 
-                          size="sm"
-                          onClick={() => {
-                            setSelectedQuestion(question);
-                            setShowAnswerModal(true);
-                          }}
-                        >
-                          <i className="fas fa-reply me-1"></i>Cevap Ver
-                        </Button>
-                      )}
-                    </div>
-                  </div>
+                      
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <div className="text-muted small">
+                          <i className="fas fa-user me-1"></i>
+                          {question.author?.username} • {formatDate(question.createdAt)}
+                        </div>
+                        <div className="d-flex gap-2">
+                          {question.isResolved && (
+                            <Badge bg="success">
+                              <i className="fas fa-check me-1"></i>Çözüldü
+                            </Badge>
+                          )}
+                          {user && user._id !== question.author._id && (
+                            <Button 
+                              variant="outline-primary" 
+                              size="sm"
+                              onClick={() => {
+                                setSelectedQuestion(question);
+                                setShowAnswerModal(true);
+                              }}
+                            >
+                              <i className="fas fa-reply me-1"></i>Cevap Ver
+                            </Button>
+                          )}
+                        </div>
+                      </div>
 
-                  {/* Cevaplar */}
-                  {question.answers && question.answers.length > 0 && (
-                    <div className="border-top pt-3">
-                      <h6 className="mb-3">
-                        <i className="fas fa-comments me-2"></i>
-                        Cevaplar ({question.answers.length})
-                      </h6>
-                      {question.answers.map((answer, answerIndex) => (
-                        <div key={answerIndex} className="mb-3 p-3 bg-light rounded">
-                          <div className="d-flex justify-content-between align-items-start mb-2">
-                            <div className="flex-grow-1">
-                              <div className="d-flex align-items-center mb-2">
-                                <strong className="me-2">{answer.author?.username}</strong>
-                                <small className="text-muted">{formatDate(answer.createdAt)}</small>
-                                {answer.isAccepted && (
-                                  <Badge bg="success" className="ms-2">
-                                    <i className="fas fa-check me-1"></i>Kabul Edildi
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="mb-2">{answer.content}</p>
-                              
-                              {/* Cevapda resim varsa göster */}
-                              {answer.images && answer.images.length > 0 && (
-                                <div className="d-flex gap-2 mb-2 flex-wrap">
-                                  {answer.images.map((img, imgIdx) => (
-                                    <img 
-                                      key={imgIdx}
-                                      src={img} 
-                                      alt={`Answer attachment ${imgIdx + 1}`}
-                                      style={{
-                                        maxWidth: '200px',
-                                        maxHeight: '150px',
-                                        objectFit: 'cover',
-                                        borderRadius: '8px',
-                                        border: '1px solid #dee2e6',
-                                        cursor: 'pointer'
-                                      }}
-                                      onClick={() => window.open(img, '_blank')}
-                                    />
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                            {user && user._id === question.author._id && !answer.isAccepted && (
-                              <Button 
-                                variant="outline-success" 
-                                size="sm"
-                                onClick={() => handleAcceptAnswer(question._id, answer._id)}
-                              >
-                                <i className="fas fa-check me-1"></i>Kabul Et
-                              </Button>
-                            )}
-                          </div>
-                          
-                          {/* Yanıtlar */}
-                          {answer.replies && answer.replies.length > 0 && (
-                            <div className="ms-3 mt-2">
-                              {answer.replies.map((reply, replyIndex) => (
-                                <div key={replyIndex} className="mb-2 p-2 bg-white rounded border-start border-3 border-info">
-                                  <div className="d-flex align-items-center mb-1">
-                                    <strong className="me-2 text-info">{reply.author?.username}</strong>
-                                    <small className="text-muted">{formatDate(reply.createdAt)}</small>
+                      {/* Cevaplar */}
+                      {question.answers && question.answers.length > 0 && (
+                        <div className="border-top pt-3">
+                          <h6 className="mb-3">
+                            <i className="fas fa-comments me-2"></i>
+                            Cevaplar ({question.answers.length})
+                          </h6>
+                          {question.answers.map((answer, answerIndex) => (
+                            <div key={answerIndex} className="mb-3 p-3 bg-light rounded">
+                              <div className="d-flex justify-content-between align-items-start mb-2">
+                                <div className="flex-grow-1">
+                                  <div className="d-flex align-items-center mb-2">
+                                    <strong className="me-2">{answer.author?.username}</strong>
+                                    <small className="text-muted">{formatDate(answer.createdAt)}</small>
+                                    {answer.isAccepted && (
+                                      <Badge bg="success" className="ms-2">
+                                        <i className="fas fa-check me-1"></i>Kabul Edildi
+                                      </Badge>
+                                    )}
                                   </div>
-                                  <p className="mb-0">{reply.content}</p>
+                                  <p className="mb-2">{answer.content}</p>
                                   
-                                  {/* Yanıtta resim varsa göster */}
-                                  {reply.images && reply.images.length > 0 && (
-                                    <div className="d-flex gap-2 mt-2 flex-wrap">
-                                      {reply.images.map((img, rImgIdx) => (
+                                  {/* Cevapda resim varsa göster */}
+                                  {answer.images && answer.images.length > 0 && (
+                                    <div className="d-flex gap-2 mb-2 flex-wrap">
+                                      {answer.images.map((img, imgIdx) => (
                                         <img 
-                                          key={rImgIdx}
+                                          key={imgIdx}
                                           src={img} 
-                                          alt={`Reply attachment ${rImgIdx + 1}`}
+                                          alt={`Answer attachment ${imgIdx + 1}`}
                                           style={{
-                                            maxWidth: '150px',
-                                            maxHeight: '100px',
+                                            maxWidth: '200px',
+                                            maxHeight: '150px',
                                             objectFit: 'cover',
                                             borderRadius: '8px',
                                             border: '1px solid #dee2e6',
@@ -465,34 +436,139 @@ const QAPage = () => {
                                     </div>
                                   )}
                                 </div>
-                              ))}
+                                {user && user._id === question.author._id && !answer.isAccepted && (
+                                  <Button 
+                                    variant="outline-success" 
+                                    size="sm"
+                                    onClick={() => handleAcceptAnswer(question._id, answer._id)}
+                                  >
+                                    <i className="fas fa-check me-1"></i>Kabul Et
+                                  </Button>
+                                )}
+                              </div>
+                              
+                              {/* Yanıtlar */}
+                              {answer.replies && answer.replies.length > 0 && (
+                                <div className="ms-3 mt-2">
+                                  {answer.replies.map((reply, replyIndex) => (
+                                    <div key={replyIndex} className="mb-2 p-2 bg-white rounded border-start border-3 border-info">
+                                      <div className="d-flex align-items-center mb-1">
+                                        <strong className="me-2 text-info">{reply.author?.username}</strong>
+                                        <small className="text-muted">{formatDate(reply.createdAt)}</small>
+                                      </div>
+                                      <p className="mb-0">{reply.content}</p>
+                                      
+                                      {/* Yanıtta resim varsa göster */}
+                                      {reply.images && reply.images.length > 0 && (
+                                        <div className="d-flex gap-2 mt-2 flex-wrap">
+                                          {reply.images.map((img, rImgIdx) => (
+                                            <img 
+                                              key={rImgIdx}
+                                              src={img} 
+                                              alt={`Reply attachment ${rImgIdx + 1}`}
+                                              style={{
+                                                maxWidth: '150px',
+                                                maxHeight: '100px',
+                                                objectFit: 'cover',
+                                                borderRadius: '8px',
+                                                border: '1px solid #dee2e6',
+                                                cursor: 'pointer'
+                                              }}
+                                              onClick={() => window.open(img, '_blank')}
+                                            />
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              
+                              {/* Yanıt Verme Butonu */}
+                              {user && user._id === question.author._id && (
+                                <Button 
+                                  variant="outline-info" 
+                                  size="sm"
+                                  className="mt-2"
+                                  onClick={() => {
+                                    setSelectedQuestion(question);
+                                    setSelectedAnswer(answer);
+                                    setShowReplyModal(true);
+                                  }}
+                                >
+                                  <i className="fas fa-reply me-1"></i>Yanıt Ver
+                                </Button>
+                              )}
                             </div>
-                          )}
-                          
-                          {/* Yanıt Verme Butonu */}
-                          {user && user._id === question.author._id && (
-                            <Button 
-                              variant="outline-info" 
-                              size="sm"
-                              className="mt-2"
-                              onClick={() => {
-                                setSelectedQuestion(question);
-                                setSelectedAnswer(answer);
-                                setShowReplyModal(true);
-                              }}
-                            >
-                              <i className="fas fa-reply me-1"></i>Yanıt Ver
-                            </Button>
-                          )}
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </Card.Body>
-              </Card>
-            </Col>
-          ))}
-        </Row>
+                      )}
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          )}
+        </Col>
+        <Col lg={4}>
+          {/* Sağ Sidebar */}
+          {user && (
+            <Card className="mb-4 card-hover">
+              <Card.Body>
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <h5 className="mb-0">
+                    <i className="fas fa-rocket me-2 text-primary"></i>Hızlı Soru
+                  </h5>
+                </div>
+                <p className="text-muted small mb-3">Bir fikrin mi var? Hemen paylaş.</p>
+                <Button variant="primary" className="btn-custom w-100" onClick={() => setShowAskModal(true)}>
+                  <i className="fas fa-plus me-2"></i>Soru Sor
+                </Button>
+              </Card.Body>
+            </Card>
+          )}
+
+          <Card className="mb-4 card-hover">
+            <Card.Body>
+              <h5 className="mb-3">
+                <i className="fas fa-tags me-2 text-warning"></i>Popüler Etiketler
+              </h5>
+              {popularTags.length === 0 ? (
+                <p className="text-muted small mb-0">Henüz etiket bulunmuyor.</p>
+              ) : (
+                <div className="d-flex flex-wrap gap-2">
+                  {popularTags.map(([tag, count]) => (
+                    <Button key={tag} size="sm" variant="outline-secondary" className="btn-custom" onClick={() => setSearchTerm(tag)}>
+                      #{tag} <Badge bg="secondary" className="ms-2">{count}</Badge>
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+
+          <Card className="mb-4 card-hover">
+            <Card.Body>
+              <h5 className="mb-3">
+                <i className="fas fa-folder-tree me-2 text-info"></i>Kategoriler
+              </h5>
+              <div className="d-grid gap-2">
+                {categories.map(cat => (
+                  <Button key={cat.value} variant={selectedCategory === cat.value ? 'primary' : 'outline-secondary'} className="btn-custom" size="sm" onClick={() => setSelectedCategory(cat.value)}>
+                    {cat.label}
+                  </Button>
+                ))}
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Floating Ask Button (Mobile) */}
+      {user && (
+        <Button className="fab-ask d-lg-none" variant="primary" onClick={() => setShowAskModal(true)}>
+          <i className="fas fa-plus"></i>
+        </Button>
       )}
 
       {/* Soru Sorma Modal */}

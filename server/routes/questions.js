@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Question = require('../models/Question');
 const auth = require('../middleware/auth');
+const adminAuth = require('../middleware/adminAuth');
 
 // Tüm soruları getir (sayfalama ile)
 router.get('/', async (req, res) => {
@@ -227,6 +228,32 @@ router.delete('/:id', auth, async (req, res) => {
 
     await Question.findByIdAndDelete(req.params.id);
 
+    res.json({ success: true, message: 'Soru silindi' });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// Admin: list all questions
+router.get('/admin/list', auth, adminAuth, async (req, res) => {
+  try {
+    const questions = await Question.find({})
+      .populate('author', 'username')
+      .sort({ createdAt: -1 });
+    res.json({ success: true, questions });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Sorular getirilemedi' });
+  }
+});
+
+// Admin: delete any question
+router.delete('/admin/:id', auth, adminAuth, async (req, res) => {
+  try {
+    const question = await Question.findById(req.params.id);
+    if (!question) {
+      return res.status(404).json({ success: false, error: 'Soru bulunamadı' });
+    }
+    await Question.findByIdAndDelete(req.params.id);
     res.json({ success: true, message: 'Soru silindi' });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });

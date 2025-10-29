@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Button, Form, ListGroup, Modal, Alert } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
+import { addCourseComment, updateCourseWithFiles, deleteCourse } from '../api';
 
 const CourseCard = ({ course, onCourseUpdated, onCourseDeleted }) => {
   const [newComment, setNewComment] = useState('');
@@ -23,10 +23,9 @@ const CourseCard = ({ course, onCourseUpdated, onCourseDeleted }) => {
     if (!newComment.trim()) return;
 
     try {
-      const response = await axios.post('/api/courses/comment', {
+      const response = await addCourseComment({
         courseId: course._id,
-        content: newComment,
-        userId: user._id
+        content: newComment
       });
 
       if (response.data.success) {
@@ -55,11 +54,7 @@ const CourseCard = ({ course, onCourseUpdated, onCourseDeleted }) => {
         formData.append('pdf', editForm.pdfFile);
       }
 
-      const response = await axios.put(`/api/courses/${course._id}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      const response = await updateCourseWithFiles(course._id, formData);
 
       if (response.data.success) {
         setSuccess('Ders başarıyla güncellendi!');
@@ -75,12 +70,15 @@ const CourseCard = ({ course, onCourseUpdated, onCourseDeleted }) => {
 
   const handleDelete = async () => {
     try {
-      const response = await axios.delete(`/api/courses/${course._id}`);
+      const response = await deleteCourse(course._id);
       if (response.data.success) {
         onCourseDeleted && onCourseDeleted(course._id);
+      } else if (response.data.message) {
+        setError(response.data.message);
       }
     } catch (error) {
-      setError('Ders silinirken bir hata oluştu');
+      const msg = error?.response?.data?.message || 'Ders silinirken bir hata oluştu';
+      setError(msg);
     }
   };
 
@@ -113,12 +111,15 @@ const CourseCard = ({ course, onCourseUpdated, onCourseDeleted }) => {
 
   return (
     <>
-      <Card className="mb-4">
+      <Card className="mb-4 course-card card-hover">
+        {course.thumbnail && (
+          <Card.Img variant="top" src={course.thumbnail} alt={course.title} className="course-thumb" />
+        )}
         <Card.Body>
           <div className="d-flex justify-content-between align-items-start mb-3">
             <div>
-              <Card.Title>{course.title}</Card.Title>
-              <Card.Text>{course.description}</Card.Text>
+              <Card.Title className="mb-1">{course.title}</Card.Title>
+              <Card.Text className="text-muted">{course.description}</Card.Text>
             </div>
             {user?.isAdmin && (
               <div>
@@ -142,8 +143,8 @@ const CourseCard = ({ course, onCourseUpdated, onCourseDeleted }) => {
           </div>
           
           {course.videoUrl && (
-            <div className="mb-3">
-              <video controls className="w-100">
+            <div className="mb-3 course-video">
+              <video controls className="w-100" style={{display: 'block'}}>
                 <source src={course.videoUrl} type="video/mp4" />
                 Tarayıcınız video etiketini desteklemiyor.
               </video>
@@ -155,7 +156,7 @@ const CourseCard = ({ course, onCourseUpdated, onCourseDeleted }) => {
               variant="primary" 
               href={course.pdfUrl} 
               target="_blank"
-              className="mb-3"
+              className="mb-3 btn-custom"
             >
               PDF'i Görüntüle
             </Button>

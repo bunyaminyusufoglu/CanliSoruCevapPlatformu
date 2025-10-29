@@ -37,11 +37,11 @@ const Header = () => {
           <Nav className="ms-auto align-items-lg-center">
             {user ? (
               <>
-                <Nav.Link as={NavLink} to="/courses" className={({ isActive }) => isActive ? 'fw-semibold text-primary' : undefined}>
-                  <i className="fas fa-book"></i> Dersler
-                </Nav.Link>
                 <Nav.Link as={NavLink} to="/qa" className={({ isActive }) => isActive ? 'fw-semibold text-primary' : undefined}>
                   <i className="fas fa-question-circle"></i> Soru & Cevap
+                </Nav.Link>
+                <Nav.Link as={NavLink} to="/courses" className={({ isActive }) => isActive ? 'fw-semibold text-primary' : undefined}>
+                  <i className="fas fa-book"></i> Dersler
                 </Nav.Link>
                 <Nav.Link as={NavLink} to="/canli-yayin" className={({ isActive }) => isActive ? 'fw-semibold text-primary' : undefined}>
                   <i className="fas fa-video"></i> Canlı Yayın

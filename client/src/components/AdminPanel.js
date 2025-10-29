@@ -1,15 +1,17 @@
 // src/components/AdminPanel.js
 import React, { useEffect, useMemo, useState } from 'react';
 import { Tab, Nav, Card, Table, Button, Form, InputGroup, Modal, Badge } from 'react-bootstrap';
-import { adminListUsers, adminToggleUserAdmin, adminDeleteUser, adminListCourses, adminUpdateCourse, adminDeleteCourse } from '../api';
+import { adminListUsers, adminToggleUserAdmin, adminDeleteUser, adminListCourses, adminUpdateCourse, adminDeleteCourse, adminListQuestions, adminDeleteQuestion } from '../api';
 
 const AdminPanel = () => {
   const [users, setUsers] = useState([]);
   const [usersFilter, setUsersFilter] = useState('');
   const [courses, setCourses] = useState([]);
+  const [questions, setQuestions] = useState([]);
   const [editCourse, setEditCourse] = useState(null);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingCourses, setLoadingCourses] = useState(false);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -50,9 +52,23 @@ const AdminPanel = () => {
     }
   };
 
+  const loadQuestions = async () => {
+    setLoadingQuestions(true);
+    setError('');
+    try {
+      const res = await adminListQuestions();
+      if (res.data?.success) setQuestions(res.data.questions || []);
+    } catch (e) {
+      setError(e.response?.data?.error || 'Sorular yüklenemedi');
+    } finally {
+      setLoadingQuestions(false);
+    }
+  };
+
   useEffect(() => {
     loadUsers();
     loadCourses();
+    loadQuestions();
   }, []);
 
   const handleToggleAdmin = async (userId) => {
@@ -129,6 +145,9 @@ const AdminPanel = () => {
           </Nav.Item>
           <Nav.Item>
             <Nav.Link eventKey="courses"><i className="fas fa-book me-2"></i>Dersler</Nav.Link>
+          </Nav.Item>
+          <Nav.Item>
+            <Nav.Link eventKey="questions"><i className="fas fa-question-circle me-2"></i>Sorular</Nav.Link>
           </Nav.Item>
         </Nav>
 
@@ -258,6 +277,68 @@ const AdminPanel = () => {
                 <Button variant="primary" onClick={handleSaveCourse}>Kaydet</Button>
               </Modal.Footer>
             </Modal>
+          </Tab.Pane>
+        </Tab.Content>
+        <Tab.Content>
+          <Tab.Pane eventKey="questions">
+            <Card className="mb-4">
+              <Card.Header className="d-flex justify-content-between align-items-center">
+                <div>
+                  <i className="fas fa-question-circle me-2"></i>
+                  Sorular
+                  <Badge bg="secondary" className="ms-2">{questions.length}</Badge>
+                </div>
+                <Button size="sm" variant="outline-primary" onClick={loadQuestions} disabled={loadingQuestions}>
+                  Yenile
+                </Button>
+              </Card.Header>
+              <Card.Body>
+                <Table hover responsive className="align-middle">
+                  <thead>
+                    <tr>
+                      <th>Başlık</th>
+                      <th>Yazar</th>
+                      <th>Durum</th>
+                      <th>Cevap</th>
+                      <th>Tarih</th>
+                      <th>İşlemler</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {questions.map(q => (
+                      <tr key={q._id}>
+                        <td className="text-truncate" style={{maxWidth: 300}}>{q.title}</td>
+                        <td>{q.author?.username || '-'}</td>
+                        <td>{q.isResolved ? <Badge bg="success">Çözüldü</Badge> : <Badge bg="warning" text="dark">Açık</Badge>}</td>
+                        <td>{q.answers?.length || 0}</td>
+                        <td>{new Date(q.createdAt).toLocaleString('tr-TR')}</td>
+                        <td>
+                          <div className="d-flex gap-2">
+                            <Button size="sm" variant="outline-secondary" as="a" href={`/questions/${q._id}`} target="_blank" rel="noreferrer">Görüntüle</Button>
+                            <Button size="sm" variant="outline-danger" onClick={async () => {
+                              if (!window.confirm('Soru silinsin mi?')) return;
+                              setError(''); setSuccess('');
+                              try {
+                                const res = await adminDeleteQuestion(q._id);
+                                if (res.data?.success) {
+                                  setQuestions(prev => prev.filter(x => x._id !== q._id));
+                                  setSuccess('Soru silindi');
+                                }
+                              } catch (e) {
+                                setError(e.response?.data?.error || 'Soru silinemedi');
+                              }
+                            }}>Sil</Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {questions.length === 0 && (
+                      <tr><td colSpan={6} className="text-center text-muted">Soru bulunamadı</td></tr>
+                    )}
+                  </tbody>
+                </Table>
+              </Card.Body>
+            </Card>
           </Tab.Pane>
         </Tab.Content>
       </Tab.Container>
