@@ -197,19 +197,19 @@ const QAPage = () => {
   };
 
   return (
-    <Container className="mt-4">
+    <Container className="mt-3 qa-compact">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h1 className="display-6 fw-bold text-primary">
+          <h1 className="h4 fw-bold text-primary mb-1">
             <i className="fas fa-question-circle me-2"></i>
             Soru & Cevap
           </h1>
-          <p className="text-muted">Sorularınızı sorun, cevaplarınızı paylaşın</p>
+          <p className="text-muted small mb-0">Sorularınızı sorun, cevaplarınızı paylaşın</p>
         </div>
         {user && (
           <Button 
             variant="primary" 
-            size="lg"
+            size="sm"
             onClick={() => setShowAskModal(true)}
             className="btn-custom"
           >
@@ -270,16 +270,17 @@ const QAPage = () => {
               <p className="mt-3 text-muted">Sorular yükleniyor...</p>
             </div>
           ) : questions.length === 0 ? (
-            <Card>
+            <Card className="card-hover">
               <Card.Body className="text-center py-5">
-                <i className="fas fa-question-circle fa-3x text-muted mb-3"></i>
-                <h4 className="text-muted">Henüz soru yok</h4>
+                <i className="fas fa-question-circle fa-2x text-muted mb-2"></i>
+                <h5 className="text-muted">Henüz soru yok</h5>
                 <p className="text-muted">İlk soruyu siz sorun!</p>
                 {user && (
                   <Button 
                     variant="primary" 
                     onClick={() => setShowAskModal(true)}
                     className="btn-custom"
+                    size="sm"
                   >
                     <i className="fas fa-plus me-2"></i>Soru Sor
                   </Button>
@@ -516,12 +517,12 @@ const QAPage = () => {
             <Card className="mb-4 card-hover">
               <Card.Body>
                 <div className="d-flex align-items-center justify-content-between mb-2">
-                  <h5 className="mb-0">
+                  <h6 className="mb-0">
                     <i className="fas fa-rocket me-2 text-primary"></i>Hızlı Soru
-                  </h5>
+                  </h6>
                 </div>
                 <p className="text-muted small mb-3">Bir fikrin mi var? Hemen paylaş.</p>
-                <Button variant="primary" className="btn-custom w-100" onClick={() => setShowAskModal(true)}>
+                <Button variant="primary" className="btn-custom w-100" size="sm" onClick={() => setShowAskModal(true)}>
                   <i className="fas fa-plus me-2"></i>Soru Sor
                 </Button>
               </Card.Body>

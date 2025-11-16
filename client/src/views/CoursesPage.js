@@ -53,21 +53,21 @@ const CoursesPage = () => {
 
   if (loading) {
     return (
-      <Container className="mt-4">
+      <Container className="mt-3 courses-compact">
         <Alert variant="info">Dersler yükleniyor...</Alert>
       </Container>
     );
   }
 
   return (
-    <Container className="mt-4">
+    <Container className="mt-3 courses-compact">
       {/* Hero / Başlık */}
       <Card className="mb-4 course-hero card-hover">
         <Card.Body>
           <Row className="g-3 align-items-center">
             <Col lg={8}>
-              <h1 className="mb-1">Eğitim İçerikleri</h1>
-              <p className="text-muted mb-0">Toplam {courses.length} ders · Gösterilen {filteredCourses.length}</p>
+              <h4 className="mb-1">Eğitim İçerikleri</h4>
+              <p className="text-muted small mb-0">Toplam {courses.length} ders · Gösterilen {filteredCourses.length}</p>
             </Col>
             <Col lg={4}>
               <Form>
@@ -108,8 +108,8 @@ const CoursesPage = () => {
           <Col>
             <Card className="text-center">
               <Card.Body className="py-5">
-                <i className="fas fa-book-open fa-3x text-muted mb-3"></i>
-                <h5 className="text-muted">Henüz ders bulunmuyor</h5>
+                <i className="fas fa-book-open fa-2x text-muted mb-2"></i>
+                <h6 className="text-muted">Henüz ders bulunmuyor</h6>
                 <p className="text-muted mb-0">Yeni dersler eklendiğinde burada göreceksiniz.</p>
               </Card.Body>
             </Card>

@@ -399,8 +399,8 @@
   position: fixed;
   right: 16px;
   bottom: 16px;
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
@@ -426,4 +426,160 @@
 
 .course-video video {
   border-radius: 8px;
+}
+
+/* Admin Panel - Hero and Stats */
+.admin-hero {
+  background: linear-gradient(135deg, #0d6efd, #6ea8fe);
+  border-radius: 16px;
+}
+
+.stat-card {
+  border: 1px solid #e9ecef;
+  border-radius: 14px;
+}
+
+.icon-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.admin-hero h2 {
+  font-size: 1.5rem;
+}
+
+.admin-hero p {
+  font-size: 0.875rem;
+}
+
+.stat-card .card-body {
+  padding: 0.75rem 1rem;
+}
+
+.stat-card .h4 {
+  font-size: 1.25rem;
+}
+
+/* Compact admin panel */
+.admin-panel .nav-link {
+  font-size: 0.95rem;
+}
+
+.admin-panel table {
+  font-size: 0.95rem;
+}
+
+.admin-panel .badge {
+  font-size: 0.75rem;
+}
+
+.admin-panel .card-header {
+  padding: 0.5rem 0.75rem;
+}
+
+.admin-panel .form-control {
+  height: 36px;
+  font-size: 0.95rem;
+}
+
+.admin-panel .input-group-text {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.9rem;
+}
+
+/* Q&A compact sizing */
+.qa-compact h1,
+.qa-compact .h1 {
+  font-size: 1.5rem;
+}
+.qa-compact p {
+  font-size: 0.9rem;
+}
+.qa-compact .btn-custom {
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  border-radius: 10px;
+}
+.qa-compact .qa-sticky-filters .form-control,
+.qa-compact .qa-sticky-filters .form-select {
+  height: 38px;
+  font-size: 0.95rem;
+}
+.qa-compact .question-card .card-title {
+  font-size: 1rem;
+}
+.qa-compact .question-card .card-text {
+  font-size: 0.95rem;
+}
+.qa-compact .badge,
+.qa-compact .tag-badge {
+  font-size: 0.7rem !important;
+}
+
+/* Courses compact sizing */
+.courses-compact h1,
+.courses-compact .h1 {
+  font-size: 1.5rem;
+}
+.courses-compact h4 {
+  font-size: 1.25rem;
+}
+.courses-compact p {
+  font-size: 0.95rem;
+}
+.courses-compact .course-hero .card-body {
+  padding: 0.75rem 1rem;
+}
+.courses-compact .course-card .card-title {
+  font-size: 1rem;
+}
+.courses-compact .course-card .card-text {
+  font-size: 0.95rem;
+}
+.courses-compact .course-card .btn,
+.courses-compact .btn-custom {
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  border-radius: 10px;
+}
+.courses-compact .form-control,
+.courses-compact .form-select {
+  height: 38px;
+  font-size: 0.95rem;
+}
+.courses-compact .course-card .course-thumb {
+  height: 150px;
+}
+
+/* Live (streams) compact sizing */
+.live-compact h1,
+.live-compact .h1 {
+  font-size: 1.5rem;
+}
+.live-compact h4 {
+  font-size: 1.25rem;
+}
+.live-compact h6 {
+  font-size: 1rem;
+}
+.live-compact p,
+.live-compact .list-group-item,
+.live-compact .card-text {
+  font-size: 0.95rem;
+}
+.live-compact .btn,
+.live-compact .btn-custom {
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  border-radius: 10px;
+}
+.live-compact .form-control,
+.live-compact .form-select {
+  height: 38px;
+  font-size: 0.95rem;
 }

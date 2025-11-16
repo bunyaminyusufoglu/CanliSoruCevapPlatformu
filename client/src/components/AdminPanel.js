@@ -15,6 +15,10 @@ const AdminPanel = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  const adminCount = useMemo(() => users.filter(u => u.isAdmin).length, [users]);
+  const openQuestionsCount = useMemo(() => questions.filter(q => !q.isResolved).length, [questions]);
+  const videoCoursesCount = useMemo(() => courses.filter(c => !!c.videoUrl).length, [courses]);
+
   const filteredUsers = useMemo(() => {
     const q = usersFilter.trim().toLowerCase();
     if (!q) return users;
@@ -25,6 +29,11 @@ const AdminPanel = () => {
       (u.soyad || '').toLowerCase().includes(q)
     );
   }, [users, usersFilter]);
+
+  const refreshAll = async () => {
+    await Promise.all([loadUsers(), loadCourses(), loadQuestions()]);
+    setSuccess('Veriler yenilendi');
+  };
 
   const loadUsers = async () => {
     setLoadingUsers(true);
@@ -128,8 +137,75 @@ const AdminPanel = () => {
   };
 
   return (
-    <div className="container mt-4">
-      <h2 className="mb-4">Admin Paneli</h2>
+    <div className="container mt-4 admin-panel">
+      <div className="admin-hero card border-0 shadow-sm mb-4">
+        <div className="card-body d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between">
+          <div className="mb-3 mb-md-0">
+            <h2 className="mb-1 text-white">Yönetim Paneli</h2>
+            <p className="mb-0 text-white-50">Sisteminizi yönetin, kullanıcıları ve içerikleri kolayca kontrol edin.</p>
+          </div>
+          <div className="d-flex gap-2">
+            <Button size="sm" variant="light" onClick={refreshAll}>
+              <i className="fas fa-rotate me-2"></i>Tümünü Yenile
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="row g-3 mb-4">
+        <div className="col-12 col-sm-6 col-lg-3">
+          <div className="card stat-card card-hover">
+            <div className="card-body d-flex align-items-center justify-content-between">
+              <div>
+                <div className="text-muted small">Toplam Kullanıcı</div>
+                <div className="h4 mb-0">{users.length}</div>
+              </div>
+              <div className="icon-badge bg-primary-subtle text-primary">
+                <i className="fas fa-users"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-12 col-sm-6 col-lg-3">
+          <div className="card stat-card card-hover">
+            <div className="card-body d-flex align-items-center justify-content-between">
+              <div>
+                <div className="text-muted small">Admin</div>
+                <div className="h4 mb-0">{adminCount}</div>
+              </div>
+              <div className="icon-badge bg-warning-subtle text-warning">
+                <i className="fas fa-user-shield"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-12 col-sm-6 col-lg-3">
+          <div className="card stat-card card-hover">
+            <div className="card-body d-flex align-items-center justify-content-between">
+              <div>
+                <div className="text-muted small">Dersler</div>
+                <div className="h4 mb-0">{courses.length}</div>
+              </div>
+              <div className="icon-badge bg-success-subtle text-success">
+                <i className="fas fa-book"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-12 col-sm-6 col-lg-3">
+          <div className="card stat-card card-hover">
+            <div className="card-body d-flex align-items-center justify-content-between">
+              <div>
+                <div className="text-muted small">Açık Sorular</div>
+                <div className="h4 mb-0">{openQuestionsCount}</div>
+              </div>
+              <div className="icon-badge bg-danger-subtle text-danger">
+                <i className="fas fa-question-circle"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {error && (
         <div className="alert alert-danger">{error}</div>

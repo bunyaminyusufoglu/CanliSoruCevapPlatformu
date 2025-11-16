@@ -52,7 +52,7 @@ const LiveStreamPage = () => {
       const options = {
         roomName: `CanliSoruCevap_${activeStream._id}`,
         width: '100%',
-        height: 500,
+        height: 420,
         parentNode: jitsiContainerRef.current,
         userInfo: {
           displayName: user?.username || 'Misafir'
@@ -175,23 +175,23 @@ const LiveStreamPage = () => {
 
   if (loading) {
     return (
-      <Container className="mt-4">
+      <Container className="mt-3 live-compact">
         <Alert variant="info">Yayınlar yükleniyor...</Alert>
       </Container>
     );
   }
 
   return (
-    <Container className="mt-4">
-      <h1 className="mb-4">Canlı Yayınlar</h1>
+    <Container className="mt-3 live-compact">
+      <h4 className="mb-3">Canlı Yayınlar</h4>
 
       {error && <Alert variant="danger">{error}</Alert>}
       {success && <Alert variant="success">{success}</Alert>}
 
       {user?.isAdmin && (
-        <Card className="mb-4">
+        <Card className="mb-3 card-hover">
           <Card.Body>
-            <h2>Yeni Yayın Başlat</h2>
+            <h6 className="mb-3"><i className="fas fa-broadcast-tower me-2 text-primary"></i>Yeni Yayın Başlat</h6>
             <Form onSubmit={handleCreateStream}>
               <Form.Group className="mb-3">
                 <Form.Label>Yayın Başlığı</Form.Label>
@@ -202,7 +202,7 @@ const LiveStreamPage = () => {
                   required
                 />
               </Form.Group>
-              <Button variant="primary" type="submit">
+              <Button variant="primary" type="submit" size="sm" className="btn-custom">
                 Yayın Başlat
               </Button>
             </Form>
@@ -214,10 +214,10 @@ const LiveStreamPage = () => {
         <Col md={8}>
           {activeStream ? (
             <div>
-              <h2>{activeStream.title}</h2>
-              <div ref={jitsiContainerRef} className="mb-3" />
+              <h6 className="mb-2">{activeStream.title}</h6>
+              <div ref={jitsiContainerRef} className="mb-2" />
               {user?.isAdmin && activeStream?.userId && String(activeStream.userId?._id || activeStream.userId) === String(user?._id) && (
-                <Button variant="danger" onClick={handleEndStream} className="mb-3">
+                <Button variant="danger" onClick={handleEndStream} className="mb-3" size="sm">
                   Yayını Sonlandır
                 </Button>
               )}
@@ -229,13 +229,13 @@ const LiveStreamPage = () => {
           )}
         </Col>
         <Col md={4}>
-          <Card>
-            <Card.Header>
-              <h3 className="mb-0">Aktif Yayınlar</h3>
+          <Card className="card-hover">
+            <Card.Header className="py-2">
+              <h6 className="mb-0">Aktif Yayınlar</h6>
             </Card.Header>
-            <Card.Body>
+            <Card.Body className="py-2">
               {streams.length === 0 ? (
-                <p>Şu anda aktif yayın bulunmuyor</p>
+                <p className="text-muted small mb-0">Şu anda aktif yayın bulunmuyor</p>
               ) : (
                 <div className="list-group">
                   {streams.map(stream => (
@@ -243,7 +243,7 @@ const LiveStreamPage = () => {
                       key={stream._id}
                       className={`list-group-item list-group-item-action ${
                         activeStream?._id === stream._id ? 'active' : ''
-                      }`}
+                      } small`}
                       onClick={() => setActiveStream(stream)}
                     >
                       {stream.title}
@@ -258,20 +258,20 @@ const LiveStreamPage = () => {
           </Card>
 
           {activeStream && (
-            <Card className="mt-3">
-              <Card.Header>
-                <h3 className="mb-0">Yorumlar</h3>
+            <Card className="mt-3 card-hover">
+              <Card.Header className="py-2">
+                <h6 className="mb-0">Yorumlar</h6>
               </Card.Header>
-              <Card.Body>
-                <div className="comments-container mb-3" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              <Card.Body className="py-2">
+                <div className="comments-container mb-2" style={{ maxHeight: '260px', overflowY: 'auto' }}>
                   {comments.map((comment, index) => (
-                    <div key={index} className="mb-2">
-                      <strong>{comment.username}:</strong> {comment.content}
+                    <div key={index} className="mb-1 small">
+                      <strong>{comment.username}:</strong> <span className="text-muted">{comment.content}</span>
                     </div>
                   ))}
                 </div>
                 <Form onSubmit={handleCommentSubmit}>
-                  <Form.Group className="mb-3">
+                  <Form.Group className="mb-2">
                     <Form.Control
                       as="textarea"
                       rows={2}
@@ -280,7 +280,7 @@ const LiveStreamPage = () => {
                       placeholder="Yorum yaz..."
                     />
                   </Form.Group>
-                  <Button variant="primary" type="submit">
+                  <Button variant="primary" type="submit" size="sm" className="btn-custom">
                     Gönder
                   </Button>
                 </Form>
