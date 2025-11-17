@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Form, Button, Alert } from 'react-bootstrap';
-import { createCourse } from '../api';
+import { createCourse, adminListUsers } from '../api';
+import { io } from 'socket.io-client';
 
 const AddCourseForm = ({ onCourseAdded }) => {
   const [formData, setFormData] = useState({
@@ -50,6 +51,28 @@ const AddCourseForm = ({ onCourseAdded }) => {
 
       if (response.data.success) {
         setSuccess('Ders başarıyla eklendi!');
+
+        // Bildirimleri tetikle: tüm admin olmayan kullanıcılara "Yeni Ders" bildirimi gönder
+        try {
+          const usersRes = await adminListUsers();
+          const users = usersRes?.data?.users || [];
+          const recipients = users.filter(u => !u.isAdmin).map(u => u._id);
+          if (recipients.length > 0) {
+            const socket = io(process.env.REACT_APP_SOCKET_URL || '/');
+            socket.emit('newCourse', {
+              course: response.data.course,
+              recipients
+            });
+            // kısa süre sonra bağlantıyı kapat
+            setTimeout(() => {
+              socket.disconnect();
+            }, 500);
+          }
+        } catch (notifyErr) {
+          // Bildirim hatası uygulamayı bozmasın, sadece logla
+          console.error('Ders bildirimi gönderilemedi:', notifyErr);
+        }
+
         setFormData({
           title: '',
           description: '',

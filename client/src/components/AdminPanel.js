@@ -2,6 +2,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Tab, Nav, Card, Table, Button, Form, InputGroup, Modal, Badge } from 'react-bootstrap';
 import { adminListUsers, adminToggleUserAdmin, adminDeleteUser, adminListCourses, adminUpdateCourse, adminDeleteCourse, adminListQuestions, adminDeleteQuestion } from '../api';
+import { useAuth } from '../contexts/AuthContext';
+import { io } from 'socket.io-client';
 
 const AdminPanel = () => {
   const [users, setUsers] = useState([]);
@@ -14,10 +16,14 @@ const AdminPanel = () => {
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageText, setMessageText] = useState('');
+  const [messageTarget, setMessageTarget] = useState(null);
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const { user: currentUser } = useAuth();
 
   const adminCount = useMemo(() => users.filter(u => u.isAdmin).length, [users]);
   const openQuestionsCount = useMemo(() => questions.filter(q => !q.isResolved).length, [questions]);
-  const videoCoursesCount = useMemo(() => courses.filter(c => !!c.videoUrl).length, [courses]);
 
   const filteredUsers = useMemo(() => {
     const q = usersFilter.trim().toLowerCase();
@@ -133,6 +139,36 @@ const AdminPanel = () => {
       }
     } catch (e) {
       setError(e.response?.data?.message || 'Ders silinemedi');
+    }
+  };
+
+  const openMessageModal = (targetUser) => {
+    setMessageTarget(targetUser);
+    setMessageText('');
+    setShowMessageModal(true);
+  };
+
+  const handleSendMessage = async () => {
+    if (!messageTarget?._id || !messageText.trim()) return;
+    setSendingMessage(true);
+    setError(''); setSuccess('');
+    try {
+      const socket = io(process.env.REACT_APP_SOCKET_URL || '/');
+      socket.emit('newMessage', {
+        recipientId: messageTarget._id,
+        senderId: currentUser?._id,
+        senderName: currentUser?.username || 'Admin',
+        message: messageText.trim()
+      });
+      setSuccess('Mesaj gönderildi');
+      setShowMessageModal(false);
+      setMessageText('');
+      setMessageTarget(null);
+      setTimeout(() => socket.disconnect(), 500);
+    } catch (e) {
+      setError('Mesaj gönderilemedi');
+    } finally {
+      setSendingMessage(false);
     }
   };
 
@@ -269,6 +305,9 @@ const AdminPanel = () => {
                           <div className="d-flex gap-2">
                             <Button size="sm" variant="outline-warning" onClick={() => handleToggleAdmin(u._id)}>
                               {u.isAdmin ? 'Adminliği Al' : 'Admin Yap'}
+                            </Button>
+                            <Button size="sm" variant="outline-primary" onClick={() => openMessageModal(u)}>
+                              Mesaj Gönder
                             </Button>
                             <Button size="sm" variant="outline-danger" onClick={() => handleDeleteUser(u._id)}>
                               Sil
@@ -418,6 +457,32 @@ const AdminPanel = () => {
           </Tab.Pane>
         </Tab.Content>
       </Tab.Container>
+
+      <Modal show={showMessageModal} onHide={() => setShowMessageModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Mesaj Gönder {messageTarget ? `- ${messageTarget.username}` : ''}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Mesaj</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={4}
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                placeholder="Göndermek istediğiniz mesajı yazın"
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowMessageModal(false)} disabled={sendingMessage}>İptal</Button>
+          <Button variant="primary" onClick={handleSendMessage} disabled={sendingMessage || !messageText.trim()}>
+            {sendingMessage ? 'Gönderiliyor...' : 'Gönder'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };
