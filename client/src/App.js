@@ -9,6 +9,7 @@ import LiveStreamPage from './views/LiveStreamPage';
 import CoursesPage from './views/CoursesPage';
 import QAPage from './views/QAPage';
 import QuestionDetailPage from './views/QuestionDetailPage';
+import LiveChatPage from './views/LiveChatPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import Header from './components/Header';
@@ -45,6 +46,11 @@ function AppContent() {
         <Route path="/canli-yayin" element={
           <PrivateRoute>
             <LiveStreamPage />
+          </PrivateRoute>
+        } />
+        <Route path="/livechat" element={
+          <PrivateRoute>
+            <LiveChatPage />
           </PrivateRoute>
         } />
       </Routes>
