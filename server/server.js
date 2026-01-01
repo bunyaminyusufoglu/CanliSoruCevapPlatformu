@@ -255,13 +255,13 @@ app.get('/api/online-users', (req, res) => {
 });
 
 // Production: Serve React build
-if (process.env.NODE_ENV === 'production') {
-  const clientBuildPath = path.join(__dirname, '..', 'client', 'build');
-  app.use(express.static(clientBuildPath));
-  app.get(/.*/, (req, res) => {
-    res.sendFile(path.join(clientBuildPath, 'index.html'));
-  });
-}
+//if (process.env.NODE_ENV === 'production') {
+//  const clientBuildPath = path.join(__dirname, '..', 'client', 'build');
+//  app.use(express.static(clientBuildPath));
+//  app.get(/.*/, (req, res) => {
+//    res.sendFile(path.join(clientBuildPath, 'index.html'));
+//  });
+//}
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`🚀 Sunucu çalışıyor: ${PORT}`));
