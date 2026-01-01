@@ -26,7 +26,7 @@ const Header = () => {
   }, [user]);
 
   return (
-    <Navbar bg="white" expand="lg" sticky="top" className="border-bottom shadow-sm">
+    <Navbar expand="lg" fixed="top" style={{backgroundColor: 'rgba(255, 255, 255, 0.22)'}}>
       <Container>
         <Navbar.Brand as={Link} to="/" className="fw-semibold text-primary">
           <i className="fas fa-graduation-cap me-2"></i>

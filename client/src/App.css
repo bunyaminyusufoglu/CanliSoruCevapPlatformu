@@ -158,10 +158,13 @@
 }
 
 /* Navigation stilleri */
+.navbar {
+  height: 70px;
+}
+
 .navbar-brand {
   font-size: 1.5rem;
   font-weight: 700;
-  height: 70px;
   display: flex;
   align-items: center;
   justify-content: center;
